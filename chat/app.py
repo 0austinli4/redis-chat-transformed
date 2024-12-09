@@ -28,7 +28,7 @@ def run_app():
     # Get port from the command-line arguments or environment variables
     arg = sys.argv[1:]
     # TODO: js client is hardcoded to proxy all to 8000 port, maybe change it?
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8000))
     if len(arg) > 0:
         try:
             port = int(arg[0])

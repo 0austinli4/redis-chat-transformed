@@ -7,15 +7,18 @@
     "bootstrap": "^4.5.3",
     "jdenticon": "^3.1.0",
     "moment": "^2.29.1",
-    "react": "^17.0.1",
+    "next": "^12.3.4",
+    "postcss": "^8.4.48",
+    "postcss-safe-parser": "^7.0.1",
+    "react": "^18.3.1",
     "react-bootstrap": "^1.4.0",
     "react-bootstrap-icons": "^1.1.0",
-    "react-dom": "^17.0.1",
+    "react-dom": "^18.3.1",
     "react-scripts": "4.0.1",
     "socket.io-client": "^3.0.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts --openssl-legacy-provider start",
     "build": "react-scripts build"
   },
   "eslintConfig": {
@@ -40,4 +43,5 @@
   "devDependencies": {
     "@types/socket.io-client": "^1.4.34"
   }
+  
 }
