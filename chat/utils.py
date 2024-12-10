@@ -7,29 +7,44 @@ from chat import demo_data
 from chat.config import get_config
 SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client
-from mdlin import AppRequest
+from mdlin import AppRequest, AppResponse
 
 
 def make_username_key(username):
     return f'username:{username}'
 
 def create_user(username, password):
+    print(f"Creating user: username={username}, password={password}")
     pending_awaits = {*()}
     username_key = make_username_key(username)
     hashed_password = bcrypt.hashpw(str(password).encode('utf-8'), bcrypt.gensalt(10))
+    print(f"Hashed password: {hashed_password}")
+    # Convert bytes to string for storage
+    hashed_password_str = hashed_password.decode('utf-8')
+    
     future_0 = AppRequest('INCR', 'total_users')
+    print(f"AppRequest INCR 'total_users': {future_0}")
     pending_awaits.add(future_0)
+    
     next_id = AppResponse(future_0)
+    print(f"AppResponse for total_users increment: next_id = {next_id}")
     pending_awaits.remove(future_0)
+    
     user_key = f'user:{next_id}'
+    print(f"Generated user_key: {user_key}")
+    
     future_1 = AppRequest('SET', username_key, user_key)
+    print(f"AppRequest SET username_key: {future_1}")
     pending_awaits.add(future_1)
-    future_2 = AppRequest('HMSET', user_key, {'username': username, 'password': hashed_password})
+    
+    future_2 = AppRequest('HMSET', user_key, {'username': username, 'password': hashed_password_str})
+    print(f"AppRequest HMSET user details: {future_2}")
     pending_awaits.add(future_2)
+    
     future_3 = AppRequest('SADD', f'user:{next_id}:rooms', '0')
+    print(f"AppRequest SADD user to default room: {future_3}")
     pending_awaits.add(future_3)
-    next_id = AppResponse(future_0)
-    pending_awaits.remove(future_0)
+
     return (pending_awaits, {'id': next_id, 'username': username})
 
 def get_messages(room_id=0, offset=0, size=50):
@@ -67,6 +82,7 @@ def get_private_room_id(user1, user2):
     return f'{min_user_id}:{max_user_id}'
 
 def create_private_room(user1, user2):
+    print("Creating private room")
     pending_awaits = {*()}
     'Create a private room and add users to it'
     room_id = get_private_room_id(user1, user2)
@@ -88,7 +104,9 @@ def init_redis():
     pending_awaits.add(future_0)
     total_users_exist = AppResponse(future_0)
     pending_awaits.remove(future_0)
-    if not total_users_exist:
+    print("Total users exists", total_users_exist)
+    if total_users_exist == '0':
+        print("Creating demo data")
         future_1 = AppRequest('SET', 'total_users', 0)
         pending_awaits.add(future_1)
         future_2 = AppRequest('SET', f'room:0:name', 'General')

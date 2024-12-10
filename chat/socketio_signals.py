@@ -3,7 +3,7 @@ import json
 from flask import session
 from flask_socketio import emit, join_room
 from chat import utils
-from mdlin import AppRequest
+from mdlin import AppRequest, AppResponse
 
 def publish(name, message, broadcast=False, room=None):
     pending_awaits = {*()}

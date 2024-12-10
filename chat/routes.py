@@ -6,7 +6,7 @@ from flask import Response, jsonify, request, session
 from chat import utils
 from chat.app import app
 from chat.auth import auth_middleware
-from mdlin import AppRequest
+from mdlin import AppRequest, AppResponse
 
 
 @app.route('/stream')

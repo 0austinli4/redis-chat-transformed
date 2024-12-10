@@ -4,7 +4,7 @@ import math
 import json
 import random
 import time
-from mdlin import AppRequest
+from mdlin import AppRequest, AppResponse
 
 demo_users = ['Pablo', 'Joe', 'Mary', 'Alex']
 greetings = ['Hello', 'Hi', 'Yo', 'Hola']
@@ -18,6 +18,7 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 def add_message(room_id, from_id, content, timestamp):
+    print("Add message")
     pending_awaits = {*()}
     room_key = f'room:{room_id}'
     message = {'from': from_id, 'date': timestamp, 'message': content, 'roomId': room_id}
@@ -26,19 +27,27 @@ def add_message(room_id, from_id, content, timestamp):
     return (pending_awaits, None)
 
 def create():
+    print("Creating data")
     pending_awaits = {*()}
     'Create demo data with the default users'
     users = []
     for demo_user in demo_users:
         pending_awaits_create_user, user = utils.create_user(demo_user, demo_password)
         pending_awaits.update(pending_awaits_create_user)
+        user['id'] = int(user['id'])
         users.append(user)
     rooms = {}
+
+    print("Finished creating users")
+    print("USERS", users)
+    print("\n\n\n")
+
     for user in users:
         other_users = filter(lambda x: x['id'] != user['id'], users)
         for other_user in other_users:
             private_room_id = utils.get_private_room_id(int(user['id']), int(other_user['id']))
             if private_room_id not in rooms:
+                print("Creating private room for users")
                 pending_awaits_create_private_room, res = utils.create_private_room(user['id'], other_user['id'])
                 pending_awaits.update(pending_awaits_create_private_room)
                 room = res[0]
