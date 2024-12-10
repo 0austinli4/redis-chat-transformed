@@ -106,16 +106,19 @@ def init_redis():
     total_users_exist = AppResponse(future_0)
     pending_awaits.remove(future_0)
     print("Total users exists", total_users_exist)
-    if total_users_exist != '0':
+    if total_users_exist == '0':
         print("Creating demo data")
         future_1 = AppRequest('SET', 'total_users', 0)
         pending_awaits.add(future_1)
         future_2 = AppRequest('SET', f'room:0:name', 'General')
         pending_awaits.add(future_2)
         #pending_awaits_create, _ = demo_data.create()
-        pending_awaits_create, _ = workload.create()
-        pending_awaits.update(pending_awaits_create)
-    return (pending_awaits, None)
+        #pending_awaits_create, _ = workload.create()
+        workload.create()
+
+
+        #pending_awaits.update(pending_awaits_create)
+    #return (pending_awaits, None)
 
 def event_stream():
     pending_awaits = {*()}

@@ -23,7 +23,8 @@ def run_app():
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
     print("Initializing app")
-    pending_awaits, _ = utils.init_redis()
+    utils.init_redis()
+    return
     # sess.init_app(app)
 
     # Fetch messages for the default room
