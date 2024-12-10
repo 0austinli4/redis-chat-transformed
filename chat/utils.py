@@ -112,7 +112,8 @@ def init_redis():
         pending_awaits.add(future_1)
         future_2 = AppRequest('SET', f'room:0:name', 'General')
         pending_awaits.add(future_2)
-        pending_awaits_create, _ = demo_data.create()
+        #pending_awaits_create, _ = demo_data.create()
+        pending_awaits_create, _ = workload.create()
         pending_awaits.update(pending_awaits_create)
     return (pending_awaits, None)
 
