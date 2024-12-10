@@ -3,7 +3,7 @@ import json
 import math
 import random
 import bcrypt
-from chat import demo_app_sync as demo_data
+from chat import workload_app_sync
 from chat.config import get_config
 from mdlin import SyncAppRequest
 
@@ -58,10 +58,10 @@ def create_private_room(user1, user2):
 
 def init_redis():
     total_users_exist = SyncAppRequest('EXISTS', 'total_users')
-    if not total_users_exist:
+    if total_users_exist == '0':
         SyncAppRequest('SET', 'total_users', 0)
         SyncAppRequest('SET', f'room:0:name', 'General')
-        demo_data.create()
+        workload_app_sync.create()
 
 def event_stream():
     """Handle message formatting, etc."""
