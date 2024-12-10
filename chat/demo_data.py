@@ -22,6 +22,7 @@ def add_message(room_id, from_id, content, timestamp):
     pending_awaits = {*()}
     room_key = f'room:{room_id}'
     message = {'from': from_id, 'date': timestamp, 'message': content, 'roomId': room_id}
+
     future_0 = AppRequest('ZADD', room_key, {json.dumps(message): int(message['date'])})
     pending_awaits.add(future_0)
     return (pending_awaits, None)

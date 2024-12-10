@@ -24,7 +24,12 @@ def run_app():
     # TODO: maybe we need to do it for gunicorn run also?
     print("Initializing app")
     pending_awaits, _ = utils.init_redis()
-    sess.init_app(app)
+    # sess.init_app(app)
+
+    # Fetch messages for the default room
+    # pending_awaits_messages, messages = utils.get_messages(room_id='0')
+    # pending_awaits.update(pending_awaits_messages)
+    # print(f"Fetched messages: {messages}")
 
     # moved to this method bc it only applies to app.py direct launch
     # Get port from the command-line arguments or environment variables
@@ -38,7 +43,7 @@ def run_app():
             pass
 
     # we need socketio.run() instead of app.run() bc we need to use the eventlet server
-    socketio.run(app, port=port, debug=True, use_reloader=True)
+    # socketio.run(app, port=port, debug=True, use_reloader=True)
 
     for pending_await in pending_awaits:
         AppResponse(pending_await)

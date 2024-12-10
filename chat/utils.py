@@ -86,6 +86,7 @@ def create_private_room(user1, user2):
     pending_awaits = {*()}
     'Create a private room and add users to it'
     room_id = get_private_room_id(user1, user2)
+    print("PRIVATE ROOM ROOM ID'", room_id)
     if not room_id:
         return (pending_awaits, (None, True))
     future_0 = AppRequest('SADD', f'user:{user1}:rooms', room_id)
