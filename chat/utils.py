@@ -106,7 +106,7 @@ def init_redis():
     total_users_exist = AppResponse(future_0)
     pending_awaits.remove(future_0)
     print("Total users exists", total_users_exist)
-    if total_users_exist == '0':
+    if total_users_exist != '0':
         print("Creating demo data")
         future_1 = AppRequest('SET', 'total_users', 0)
         pending_awaits.add(future_1)

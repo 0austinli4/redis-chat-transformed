@@ -18,8 +18,11 @@ def create_user(username, password):
     hashed_password = bcrypt.hashpw(str(password).encode('utf-8'), bcrypt.gensalt(10))
     next_id = SyncAppRequest('INCR', 'total_users')
     user_key = f'user:{next_id}'
+
+    hashed_password_str = hashed_password.decode('utf-8')
+
     SyncAppRequest('SET', username_key, user_key)
-    SyncAppRequest('HMSET', user_key, {'username': username, 'password': hashed_password})
+    SyncAppRequest('HMSET', user_key, {'username': username, 'password': hashed_password_str})
     SyncAppRequest('SADD', f'user:{next_id}:rooms', '0')
     return {'id': next_id, 'username': username}
 
@@ -35,7 +38,9 @@ def get_messages(room_id=0, offset=0, size=50):
 
 def hmget(key, key2):
     """Wrapper around hmget to unpack bytes from hmget"""
+    print(key, key2)
     result = SyncAppRequest('HMGET', key, key2)
+    print("HMGET RESULT", result)
     return list(map(lambda x: x.decode('utf-8'), result))
 
 def get_private_room_id(user1, user2):
@@ -58,7 +63,8 @@ def create_private_room(user1, user2):
 
 def init_redis():
     total_users_exist = SyncAppRequest('EXISTS', 'total_users')
-    if total_users_exist == '0':
+    print(total_users_exist)
+    if total_users_exist != '0':
         SyncAppRequest('SET', 'total_users', 0)
         SyncAppRequest('SET', f'room:0:name', 'General')
         workload_app_sync.create()
