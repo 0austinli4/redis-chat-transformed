@@ -22,8 +22,8 @@ def run_app_sync():
     # Create redis connection etc.
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
-    print("Initializing app")
     utils_app_sync.init_redis()
+    return
     # sess.init_app(app)
 
     # Fetch messages for the default room

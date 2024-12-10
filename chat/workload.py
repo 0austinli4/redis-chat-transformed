@@ -19,20 +19,21 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 def add_message(room_id, from_id, content, timestamp):
-    print("Add message")
     pending_awaits = {*()}
     room_key = f'room:{room_id}'
     message = {'from': from_id, 'date': timestamp, 'message': content, 'roomId': room_id}
 
     future_0 = AppRequest('ZADD', room_key, {json.dumps(message): int(message['date'])})
     pending_awaits.add(future_0)
+    for future in pending_awaits:
+        AppResponse(future)
     return (pending_awaits, None)
 
 def create():
     num_minutes = 1
     api = ['create_user', 'create_private_room', 'add_message', 'get_messages']
     t_end = time.time() + 60 * num_minutes
-    file1 = open("/users/akalaba/asynch_latencies.txt", "w+")
+    #file1 = open("/users/akalaba/asynch_latencies.txt", "w+")
     selector = 0
     while time.time() < t_end:
         app_request_type = random.randint(1, 100) 
@@ -62,6 +63,8 @@ def create():
         after = time.time_ns()
         lat = after - before
         optype = api[selector]
-        file1.write(f'app,{lat}')
-        file1.write(f'{optype},{lat}')
+        #file1.write(f'app,{lat}')
+        #file1.write(f'{optype},{lat}')
+        print(f'app,{lat}')
+        print(f'{optype},{lat}')
 
