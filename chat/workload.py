@@ -31,25 +31,25 @@ def add_message(room_id, from_id, content, timestamp):
 def create():
     num_minutes = 1
     t_end = time.time() + 60 * num_minutes
-    for time.time() < t_end:
+    while time.time() < t_end:
         app_request_type = random.randint(1, 100) 
         if app_request_type <= 2:
             user = np.random.zipf(2, 1)
             password = np.random.zipf(2, 1)
-            utils.create_user(user, password)
+            utils.create_user(str(user), str(password))
         elif app_request_type <= 8:
             user1 = np.random.zipf(2, 1)
             user2 = np.random.zipf(2, 1)
-            create_private_room(user1, user2)
+            utils.create_private_room(user1, user2)
         elif app_request_type <= 40:
-            room_id = np.random.zipf(2, 1)
-            from_id = "anja"
-            content = "heyyy"
-            timestamp = 4
+            room_id = int(np.random.zipf(2, 1))
+            from_id = 44
+            content = 'heyyy'
+            timestamp = time.time()
             add_message(room_id, from_id, content, timestamp)
         else:
             room_id = np.random.zipf(2, 1)
-            utils.get_messages(room_id=0)
+            utils.get_messages(room_id)
         
     def random_user_id():
         return users[math.floor(len(users) * math_random())]['id']
