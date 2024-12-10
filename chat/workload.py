@@ -19,13 +19,14 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 def add_message(room_id, from_id, content, timestamp):
-    print("Add message")
     pending_awaits = {*()}
     room_key = f'room:{room_id}'
     message = {'from': from_id, 'date': timestamp, 'message': content, 'roomId': room_id}
 
     future_0 = AppRequest('ZADD', room_key, {json.dumps(message): int(message['date'])})
     pending_awaits.add(future_0)
+    for future in pending_awaits:
+        AppResponse(future)
     return (pending_awaits, None)
 
 def create():
