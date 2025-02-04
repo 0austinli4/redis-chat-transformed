@@ -104,24 +104,43 @@ def create_private_room(user1, user2):
         AppResponse(future)
     return (pending_awaits, ({'id': room_id, 'names': [user1, user2]}, False))
 
-def init_redis():
+def init_redis(clientid):
     pending_awaits = {*()}
-    future_0 = AppRequest('EXISTS', 'total_users')
-    pending_awaits.add(future_0)
-    total_users_exist = AppResponse(future_0)
-    pending_awaits.remove(future_0)
-    if total_users_exist == '0':
-        future_1 = AppRequest('SET', 'total_users', 0)
-        pending_awaits.add(future_1)
-        future_2 = AppRequest('SET', f'room:0:name', 'General')
-        pending_awaits.add(future_2)
-        #pending_awaits_create, _ = demo_data.create()
-        #pending_awaits_create, _ = workload.create()
-        workload.create()
-
-
-        #pending_awaits.update(pending_awaits_create)
-    #return (pending_awaits, None)
+    if int(clientid) == 0:
+        future_0 = AppRequest('EXISTS', 'total_users')
+        pending_awaits.add(future_0)
+        total_users_exist = AppResponse(future_0)
+        pending_awaits.remove(future_0)
+        #print("HEY")
+        if total_users_exist == '0':
+            future_1 = AppRequest('SET', 'total_users', 0)
+            pending_awaits.add(future_1)
+            future_2 = AppRequest('SET', f'room:0:name', 'General')
+            pending_awaits.add(future_2)
+            AppResponse(future_1)
+            AppResponse(future_2)
+            pending_awaits.remove(future_1)
+            pending_awaits.remove(future_2)
+            #pending_awaits_create, _ = demo_data.create()
+            #pending_awaits_create, _ = workload.create()
+            workload.create(clientid)
+            return
+    elif int(clientid) > 0:
+        future_0 = AppRequest('EXISTS', 'total_users')
+        pending_awaits.add(future_0)
+        #total_users_exist = AppResponse(future_0)
+        #pending_awaits.remove(future_0)
+        print("HI")
+        '''while True:
+            pending_awaits.add(future_0)
+            total_users_exist = AppResponse(future_0)
+            pending_awaits.remove(future_0)
+            return
+            if total_users_exist != '0':
+                break
+        workload.create(clientid)
+        '''
+        return
 
 def event_stream():
     pending_awaits = {*()}

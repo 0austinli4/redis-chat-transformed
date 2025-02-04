@@ -18,11 +18,11 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
-def run_app():
+def run_app(clientid):
     # Create redis connection etc.
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
-    utils.init_redis()
+    utils.init_redis(clientid)
     return
     # sess.init_app(app)
 

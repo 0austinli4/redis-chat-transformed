@@ -23,11 +23,12 @@ def add_message(room_id, from_id, content, timestamp):
     message = {'from': from_id, 'date': timestamp, 'message': content, 'roomId': room_id}
     SyncAppRequest('ZADD', room_key, {json.dumps(message): int(message['date'])})
 
-def create():
+def create(clientid):
     num_minutes = 1
     api = ['create_user', 'create_private_room', 'add_message', 'get_messages']
     t_end = time.time() + 60 * num_minutes
     selector = 0
+    #print("client-d = ", clientid)
     while time.time() < t_end:
         app_request_type = random.randint(1, 100) 
         before = time.time_ns()

@@ -1,5 +1,5 @@
 from chat.app_app_sync import app, run_app_sync  # noqa
-
+import argparse
 
 if __name__ == "__main__":
     # monkey patch is "required to force the message queue package to use coroutine friendly functions and classes"
@@ -7,4 +7,9 @@ if __name__ == "__main__":
     import eventlet
 
     eventlet.monkey_patch()
-    run_app_sync()
+    parser = argparse.ArgumentParser(description='Short sample app')
+    parser.add_argument('--clientid', action="store", dest='clientid', default=0)
+    args = parser.parse_args()
+
+    #print("this client id = ", args.clientid)
+    run_app_sync(args.clientid)
