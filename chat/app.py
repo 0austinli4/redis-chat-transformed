@@ -9,7 +9,7 @@ from flask_socketio import SocketIO
 from chat import utils
 from chat.config import get_config
 from chat.socketio_signals import io_connect, io_disconnect, io_join_room, io_on_message
-from mdlin import AppRequest, AppResponse
+from mdlin import AppRequest, AppResponse, InitCustom
 
 sess = Session()
 app = Flask(__name__, static_url_path="", static_folder="../client/build")
@@ -18,10 +18,11 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
-def run_app(clientid):
+def run_app(clientid, client_type):
     # Create redis connection etc.
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
+    InitCustom(clientid, client_type)
     utils.init_redis(clientid)
     return
     # sess.init_app(app)
@@ -47,6 +48,7 @@ def run_app(clientid):
 
     for pending_await in pending_awaits:
         AppResponse(pending_await)
+
 
 # this was rewritten from decorators so we can move this methods to another file
 socketio.on_event("connect", io_connect)

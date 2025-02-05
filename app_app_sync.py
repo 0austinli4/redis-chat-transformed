@@ -7,9 +7,9 @@ if __name__ == "__main__":
     import eventlet
 
     eventlet.monkey_patch()
-    parser = argparse.ArgumentParser(description='Short sample app')
-    parser.add_argument('--clientid', action="store", dest='clientid', default=0)
+    parser = argparse.ArgumentParser(description="Short sample app")
+    parser.add_argument("--clientid", action="store", dest="clientid", default=0)
     args = parser.parse_args()
 
-    #print("this client id = ", args.clientid)
-    run_app_sync(args.clientid)
+    # print("this client id = ", args.clientid)
+    run_app_sync(args.clientid, "multi_paxos")

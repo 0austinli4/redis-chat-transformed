@@ -6,10 +6,10 @@ from flask_cors import CORS
 from flask_session import Session
 from flask_socketio import SocketIO
 
-from chat import utils_app_sync
+from chat import utils
 from chat.config import get_config
 from chat.socketio_signals import io_connect, io_disconnect, io_join_room, io_on_message
-from mdlin import AppRequest, AppResponse, InitCustom
+from mdlin import AppRequest, AppResponse
 
 sess = Session()
 app = Flask(__name__, static_url_path="", static_folder="../client/build")
@@ -18,12 +18,11 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 
-def run_app_sync(client_id, client_type):
+def run_app():
     # Create redis connection etc.
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
-    InitCustom(client_id, client_type)
-    utils_app_sync.init_redis(client_id)
+    utils.init_redis()
     return
     # sess.init_app(app)
 
@@ -43,6 +42,11 @@ def run_app_sync(client_id, client_type):
         except ValueError:
             pass
 
+    # we need socketio.run() instead of app.run() bc we need to use the eventlet server
+    # socketio.run(app, port=port, debug=True, use_reloader=True)
+
+    # for pending_await in pending_awaits:
+    #     AppResponse(pending_await)
 
 # this was rewritten from decorators so we can move this methods to another file
 socketio.on_event("connect", io_connect)
