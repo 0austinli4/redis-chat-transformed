@@ -22,11 +22,9 @@ def run_app(clientid, client_type):
     # Create redis connection etc.
     # Here we initialize our database, create demo data (if it's necessary)
     # TODO: maybe we need to do it for gunicorn run also?
-    print("instantiating with client id: ", clientid)
     InitCustom(clientid, client_type)
+    utils.init_redis(clientid)
     return
-    # utils.init_redis(clientid)
-    # return
     # sess.init_app(app)
 
     # Fetch messages for the default room
