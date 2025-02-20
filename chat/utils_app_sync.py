@@ -6,6 +6,7 @@ import bcrypt
 from chat import workload_app_sync
 from chat.config import get_config
 from mdlin import SyncAppRequest
+import sys
 
 SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client
@@ -68,14 +69,20 @@ def create_private_room(user1, user2):
     return ({"id": room_id, "names": [user1, user2]}, False)
 
 
-def init_redis(client_id):
-    total_users_exist = SyncAppRequest("EXISTS", "total_users")
-    if total_users_exist == "0":
-        SyncAppRequest("SET", "total_users", 0)
-        SyncAppRequest("SET", f"room:0:name", "General")
-        workload_app_sync.create(client_id)
-    else:
-        print("Error with init")
+def init_redis(clientid):
+    print("using paxos client utils!!", file=sys.stderr)
+    if int(clientid) == 0:
+        total_users_exist = SyncAppRequest("EXISTS", "total_users")
+        if total_users_exist == "0":
+            SyncAppRequest("SET", "total_users", 0)
+            SyncAppRequest("SET", f"room:0:name", "General")
+            workload_app_sync.create(clientid)
+    elif int(clientid) > 0:
+        while True:
+            total_users_exist = SyncAppRequest("EXISTS", "total_users")
+            if total_users_exist != "0":
+                break
+        workload_app_sync.create(clientid)
 
 
 def event_stream():

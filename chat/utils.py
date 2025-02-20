@@ -2,6 +2,7 @@ import asyncio
 import json
 import math
 import random
+import sys
 import bcrypt
 from chat import demo_data, workload
 from chat.config import get_config
@@ -117,13 +118,13 @@ def create_private_room(user1, user2):
 
 
 def init_redis(clientid):
+    print("in MDL python", file=sys.stderr)
     pending_awaits = {*()}
     if int(clientid) == 0:
         future_0 = AppRequest("EXISTS", "total_users")
         pending_awaits.add(future_0)
         total_users_exist = AppResponse(future_0)
         pending_awaits.remove(future_0)
-        # print("HEY")
         if total_users_exist == "0":
             future_1 = AppRequest("SET", "total_users", 0)
             pending_awaits.add(future_1)
@@ -136,25 +137,15 @@ def init_redis(clientid):
             # pending_awaits_create, _ = demo_data.create()
             # pending_awaits_create, _ = workload.create()
             workload.create(clientid)
-            return
-        else:
-            print("Error creating workload")
     elif int(clientid) > 0:
-        future_0 = AppRequest("EXISTS", "total_users")
-        pending_awaits.add(future_0)
-        # total_users_exist = AppResponse(future_0)
-        # pending_awaits.remove(future_0)
-        print("HI")
-        """while True:
+        while True:
+            future_0 = AppRequest("EXISTS", "total_users")
             pending_awaits.add(future_0)
             total_users_exist = AppResponse(future_0)
             pending_awaits.remove(future_0)
-            return
-            if total_users_exist != '0':
+            if total_users_exist != "0":
                 break
-        """
         workload.create(clientid)
-        return
 
 
 def event_stream():
