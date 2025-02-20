@@ -11,16 +11,21 @@ SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client
 
 
-def create():
-    num_minutes = 1
-    t_end = time.time() + 20 * num_minutes
+def create(client_type):
+    num_minutes = 0.2
+    t_end = time.time() + 60 * num_minutes
 
     while time.time() < t_end:
         before = time.time_ns()
-        add_message()
+        optype = "test"
+        if client_type == "mdl":
+            optype = "mdl"
+            add_message()
+        else:
+            optype = "multi_paxos"
+            add_message_sync()
         after = time.time_ns()
         lat = after - before
-        optype = "test"
         print(f"app,{lat}")
         print(f"{optype},{lat}")
 
@@ -42,3 +47,15 @@ def add_message():
 
     for future_await in pending_awaits:
         AppResponse(future_await)
+
+
+def add_message_sync():
+    room_id = 1
+    content = "Hello"
+
+    results = []
+
+    # Perform 4 AppRequests
+    for _ in range(4):
+        res = SyncAppRequest("ZADD", room_id, content)
+        results.append(res)
