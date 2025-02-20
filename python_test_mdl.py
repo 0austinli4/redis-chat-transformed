@@ -2,6 +2,7 @@ import asyncio
 import json
 import math
 import random
+import sys
 import bcrypt
 import time
 from chat.config import get_config
@@ -31,7 +32,11 @@ def create(client_type):
 
 
 if __name__ == "__main__":
-    create()
+    if len(sys.argv) > 1:
+        client_type = sys.argv[1]
+        create(client_type)
+    else:
+        print("Usage: python script.py <client_type>")
 
 
 def add_message():
