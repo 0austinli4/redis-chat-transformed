@@ -48,9 +48,8 @@ def create(clientid):
     num_minutes = 1
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
     t_end = time.time() + 60 * num_minutes
-    # file1 = open("/users/akalaba/asynch_latencies.txt", "w+")
+
     selector = 0
-    # print("client-d = %s", clientid)
     while time.time() < t_end:
         app_request_type = random.randint(1, 100)
         before = time.time_ns()

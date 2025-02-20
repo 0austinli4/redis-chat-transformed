@@ -137,6 +137,8 @@ def init_redis(clientid):
             # pending_awaits_create, _ = workload.create()
             workload.create(clientid)
             return
+        else:
+            print("Error creating workload")
     elif int(clientid) > 0:
         future_0 = AppRequest("EXISTS", "total_users")
         pending_awaits.add(future_0)
@@ -150,8 +152,8 @@ def init_redis(clientid):
             return
             if total_users_exist != '0':
                 break
-        workload.create(clientid)
         """
+        workload.create(clientid)
         return
 
 

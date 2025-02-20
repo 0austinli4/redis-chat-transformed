@@ -74,6 +74,8 @@ def init_redis():
         SyncAppRequest("SET", "total_users", 0)
         SyncAppRequest("SET", f"room:0:name", "General")
         workload_app_sync.create()
+    else:
+        print("Error with init")
 
 
 def event_stream():
