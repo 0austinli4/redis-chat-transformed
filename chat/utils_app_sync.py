@@ -73,7 +73,7 @@ def init_redis(client_id):
     if total_users_exist == "0":
         SyncAppRequest("SET", "total_users", 0)
         SyncAppRequest("SET", f"room:0:name", "General")
-        workload_app_sync.create()
+        workload_app_sync.create(client_id)
     else:
         print("Error with init")
 
