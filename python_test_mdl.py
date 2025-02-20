@@ -5,7 +5,7 @@ import random
 import bcrypt
 import time
 from chat.config import get_config
-from mdlin import AppRequest, AppResponse
+from mdlin import AppRequest, AppResponse, SyncAppRequest
 
 SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client

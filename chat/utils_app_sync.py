@@ -68,7 +68,7 @@ def create_private_room(user1, user2):
     return ({"id": room_id, "names": [user1, user2]}, False)
 
 
-def init_redis():
+def init_redis(client_id):
     total_users_exist = SyncAppRequest("EXISTS", "total_users")
     if total_users_exist == "0":
         SyncAppRequest("SET", "total_users", 0)
