@@ -52,6 +52,7 @@ def create(clientid):
 
         user1 = np.random.zipf(2, 1).item()
         user2 = np.random.zipf(2, 1).item()
+        print(user1, user2)
 
         utils_app_sync.create_private_room(user1, user2)
         # if app_request_type <= 2:

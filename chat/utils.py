@@ -91,7 +91,7 @@ def hmget(key, key2):
 
 
 def get_private_room_id(user1, user2):
-    if math.isnan(user1) or math.isnan(user2) or user1 == user2:
+    if user1 == user2:
         return None
     min_user_id = user2 if user1 > user2 else user1
     max_user_id = user1 if user1 > user2 else user2
