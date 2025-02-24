@@ -53,27 +53,33 @@ def create(clientid):
     while time.time() < t_end:
         app_request_type = random.randint(1, 100)
         before = time.time_ns()
-        if app_request_type <= 2:
-            selector = 0
-            user = np.random.zipf(2, 1)
-            password = np.random.zipf(2, 1)
-            utils.create_user(str(user), str(password))
-        elif app_request_type <= 10:
-            selector = 1
-            user1 = np.random.zipf(2, 1)
-            user2 = np.random.zipf(2, 1)
-            utils.create_private_room(user1, user2)
-        elif app_request_type <= 50:
-            selector = 2
-            room_id = int(np.random.zipf(2, 1))
-            from_id = 44
-            content = "heyyy"
-            timestamp = time.time()
-            add_message(room_id, from_id, content, timestamp)
-        else:
-            selector = 3
-            room_id = np.random.zipf(2, 1)
-            utils.get_messages(room_id)
+
+        selector = 1
+        user1 = np.random.zipf(2, 1)
+        user2 = np.random.zipf(2, 1)
+        utils.create_private_room(user1, user2)
+
+        # if app_request_type <= 2:
+        #     selector = 0
+        #     user = np.random.zipf(2, 1)
+        #     password = np.random.zipf(2, 1)
+        #     utils.create_user(str(user), str(password))
+        # elif app_request_type <= 10:
+        #     selector = 1
+        #     user1 = np.random.zipf(2, 1)
+        #     user2 = np.random.zipf(2, 1)
+        #     utils.create_private_room(user1, user2)
+        # elif app_request_type <= 50:
+        #     selector = 2
+        #     room_id = int(np.random.zipf(2, 1))
+        #     from_id = 44
+        #     content = "heyyy"
+        #     timestamp = time.time()
+        #     add_message(room_id, from_id, content, timestamp)
+        # else:
+        #     selector = 3
+        #     room_id = np.random.zipf(2, 1)
+        #     utils.get_messages(room_id)
 
         after = time.time_ns()
         lat = after - before
