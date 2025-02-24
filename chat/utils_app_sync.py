@@ -59,7 +59,9 @@ def get_private_room_id(user1, user2):
 
 def create_private_room(user1, user2):
     """Create a private room and add users to it"""
+    print("Create private room called with", user1, user2)
     room_id = get_private_room_id(user1, user2)
+    print("Create private room return value", room_id)
     if not room_id:
         raise RuntimeError("ROOM ID DID NOT RETURN")
         return (None, True)

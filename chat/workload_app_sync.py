@@ -41,7 +41,7 @@ def add_message(room_id, from_id, content, timestamp):
 def create(clientid):
     num_minutes = 1
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
-    t_end = time.time() + 60 * num_minutes
+    t_end = time.time() + 20 * num_minutes
     selector = 0
     # print("client-d = ", clientid)
     print("Running client SYNC create")
@@ -50,8 +50,8 @@ def create(clientid):
         before = time.time_ns()
         selector = 1
 
-        user1 = np.random.zipf(2, 1).item()
-        user2 = np.random.zipf(2, 1).item()
+        user1 = 1
+        user2 = 2
         print(user1, user2)
 
         utils_app_sync.create_private_room(user1, user2)
