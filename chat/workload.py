@@ -50,7 +50,6 @@ def create(clientid):
     t_end = time.time() + 20 * num_minutes
 
     selector = 0
-    print("Running client MDL create")
     while time.time() < t_end:
         app_request_type = random.randint(1, 100)
         before = time.time_ns()

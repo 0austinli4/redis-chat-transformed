@@ -44,7 +44,6 @@ def create(clientid):
     t_end = time.time() + 20 * num_minutes
     selector = 0
     # print("client-d = ", clientid)
-    print("Running client SYNC create")
     while time.time() < t_end:
         app_request_type = random.randint(1, 100)
         before = time.time_ns()
@@ -52,7 +51,6 @@ def create(clientid):
 
         user1 = 1
         user2 = 2
-        print(user1, user2)
 
         utils_app_sync.create_private_room(user1, user2)
         # if app_request_type <= 2:
