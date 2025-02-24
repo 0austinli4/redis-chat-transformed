@@ -89,3 +89,32 @@ def create(clientid):
         # file1.write(f'{optype},{lat}')
         print(f"app,{lat}")
         print(f"{optype},{lat}")
+
+
+def simple_workload():
+    num_minutes = 1
+    api = ["create_user", "create_private_room", "add_message", "get_messages"]
+    t_end = time.time() + 20 * num_minutes
+
+    while time.time() < t_end:
+        before = time.time_ns()
+        selector = 1
+
+        key = 0
+        key2 = 1
+
+        future_0 = AppRequest("HMGET", key, key2)
+        future_1 = AppRequest("HMGET", key, key2)
+        future_2 = AppRequest("HMGET", key, key2)
+
+        AppResponse(future_0)
+        AppResponse(future_1)
+        AppResponse(future_2)
+
+        after = time.time_ns()
+        lat = after - before
+        optype = api[selector]
+        # file1.write(f'app,{lat}')
+        # file1.write(f'{optype},{lat}')
+        print(f"app,{lat}")
+        print(f"{optype},{lat}")
