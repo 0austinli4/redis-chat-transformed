@@ -61,6 +61,7 @@ def create_private_room(user1, user2):
     """Create a private room and add users to it"""
     room_id = get_private_room_id(user1, user2)
     if not room_id:
+        raise RuntimeError("ROOM ID DID NOT RETURN")
         return (None, True)
     SyncAppRequest("SADD", f"user:{user1}:rooms", room_id)
     SyncAppRequest("SADD", f"user:{user2}:rooms", room_id)
