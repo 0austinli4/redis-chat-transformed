@@ -44,57 +44,49 @@ def add_message(room_id, from_id, content, timestamp):
     return (pending_awaits, None)
 
 
-def create(clientid):
-    num_minutes = 1
+def create(clientid, explen):
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
-    t_end = time.time() + 20 * num_minutes
+    # t_end = time.time() + (int(explen) - 10)
 
     selector = 0
-    while time.time() < t_end:
-        app_request_type = random.randint(1, 100)
+    while True:
+    # while time.time() < t_end:
+        app_request_type = np.random.uniform(0, 100)
         before = time.time_ns()
 
-        selector = 1
-        user1 = 1
-        user2 = 2
-
-        utils.create_private_room(user1, user2)
-
-        # if app_request_type <= 2:
-        #     selector = 0
-        #     user = np.random.zipf(2, 1)
-        #     password = np.random.zipf(2, 1)
-        #     utils.create_user(str(user), str(password))
-        # elif app_request_type <= 10:
-        #     selector = 1
-        #     user1 = np.random.zipf(2, 1)
-        #     user2 = np.random.zipf(2, 1)
-        #     utils.create_private_room(user1, user2)
-        # elif app_request_type <= 50:
-        #     selector = 2
-        #     room_id = int(np.random.zipf(2, 1))
-        #     from_id = 44
-        #     content = "heyyy"
-        #     timestamp = time.time()
-        #     add_message(room_id, from_id, content, timestamp)
-        # else:
-        #     selector = 3
-        #     room_id = np.random.zipf(2, 1)
-        #     utils.get_messages(room_id)
+        if app_request_type < 2:
+            selector = 0
+            user = np.random.uniform(0, 1e9)
+            password = np.random.uniform(0, 1e9)
+            utils.create_user(str(user), str(password))
+        elif app_request_type < 10:
+            selector = 1
+            user1 = np.random.uniform(0, 1e9)
+            user2 = np.random.uniform(0, 1e9)
+            utils.create_private_room(user1, user2)
+        elif app_request_type < 50:
+            selector = 2
+            room_id = int(np.random.uniform(0, 1e9))
+            from_id = 44
+            content = "heyyy"
+            timestamp = time.time()
+            add_message(room_id, from_id, content, timestamp)
+        else:
+            selector = 3
+            room_id = np.random.uniform(0, 1e9)
+            utils.get_messages(room_id)
 
         after = time.time_ns()
         lat = after - before
         optype = api[selector]
-        # file1.write(f'app,{lat}')
-        # file1.write(f'{optype},{lat}')
         print(f"app,{lat}")
         print(f"{optype},{lat}")
 
-
+'''
 def simple_workload():
     num_minutes = 1
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
-    t_end = time.time() + 20 * num_minutes
+    t_end = time.time() + 50 * num_minutes
 
     while time.time() < t_end:
         before = time.time_ns()
@@ -118,3 +110,4 @@ def simple_workload():
         # file1.write(f'{optype},{lat}')
         print(f"app,{lat}")
         print(f"{optype},{lat}")
+'''

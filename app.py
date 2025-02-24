@@ -9,8 +9,9 @@ if __name__ == "__main__":
     eventlet.monkey_patch()
     parser = argparse.ArgumentParser(description="Short sample app")
     parser.add_argument("--clientid", action="store", dest="clientid", default=0)
+    parser.add_argument("--explen", action="store", dest="explen", default=0)
     args = parser.parse_args()
 
     # print("this client id = ", args.clientid)
     
-    run_app(args.clientid, "mdl")
+    run_app(args.clientid, "mdl", args.explen)
