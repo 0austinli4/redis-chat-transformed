@@ -2,6 +2,7 @@ import time
 from chat import utils_app_sync
 from chat import workload_app_sync
 from mdlin import SyncAppRequest
+import argparse
 
 
 def one_op_workload():
@@ -23,6 +24,11 @@ def one_op_workload():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Short sample app")
+    parser.add_argument("--clientid", action="store", dest="clientid", default=0)
+    parser.add_argument("--explen", action="store", dest="explen", default=0)
+    args = parser.parse_args()
+    print("Received args", args)
     one_op_workload()
 
 
