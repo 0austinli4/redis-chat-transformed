@@ -3,24 +3,30 @@ from chat import utils
 from chat import workload
 from mdlin import AppRequest, AppResponse
 
+
 def one_op_workload():
     room_id = 1
     content = "Hello"
     user_key = "123"
 
+    print(f"DEBUG: Performing HMSET for user_key: {user_key}")
+
     future = AppRequest(
         "HMSET", user_key, {"username": "user", "password": "pass"}
     )
     res = AppResponse(future)
+    print(f"DEBUG: HMSET result: {SyncAppRequest("HMGET", user_key, "user")}")
 
     results = []
+    print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
-    # Perform 100 AppRequet
     for i in range(100):
         future = AppRequest("HMGET", user_key, "user")
         res = AppResponse(future)
         if i == 0:
             print("Received answer from HMGET: ", res)
+    
+    print("DEBUG: Completed HMGET iterations")
 
 if __name__ == "__main__":
     one_op_workload()

@@ -3,25 +3,31 @@ from chat import utils_app_sync
 from chat import workload_app_sync
 from mdlin import SyncAppRequest
 
-def add_message_sync():
+def one_op_workload():
     room_id = 1
     content = "Hello"
     user_key = "123"
 
+    print(f"DEBUG: Performing HMSET for user_key: {user_key}")
+
     SyncAppRequest(
         "HMSET", user_key, {"username": "user", "password": "pass"}
     )
+    print(f"DEBUG: HMSET result: {SyncAppRequest("HMGET", user_key, "user")}")
 
     results = []
+    print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
-    # Perform 4 AppRequests
     for i in range(100):
         res = SyncAppRequest("HMGET", user_key, "user")
         if i == 0:
             print("Received answer from HMGET, EXPECTED: 'pass': ", res)
+    
+    print("DEBUG: Completed HMGET iterations")
+
             
 if __name__ == "__main__":
-    add_message_sync()
+    one_op_workload()
 
 def init_redis(clientid):
     print("using paxos client utils!!")
