@@ -15,12 +15,11 @@ def add_message_sync():
     results = []
 
     # Perform 4 AppRequests
-    for i in range(1000):
+    for i in range(100):
         res = SyncAppRequest("HMGET", user_key, "user")
         if i == 0:
-            print("Received answer from HMGET: ", res)
-        results.append(res)
-
+            print("Received answer from HMGET, EXPECTED: 'pass': ", res)
+            
 if __name__ == "__main__":
     add_message_sync()
 

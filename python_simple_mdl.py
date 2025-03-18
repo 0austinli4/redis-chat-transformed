@@ -3,6 +3,28 @@ from chat import utils
 from chat import workload
 from mdlin import AppRequest, AppResponse
 
+def one_op_workload():
+    room_id = 1
+    content = "Hello"
+    user_key = "123"
+
+    future = AppRequest(
+        "HMSET", user_key, {"username": "user", "password": "pass"}
+    )
+    res = AppResponse(future)
+
+    results = []
+
+    # Perform 100 AppRequet
+    for i in range(100):
+        future = AppRequest("HMGET", user_key, "user")
+        res = AppResponse(future)
+        if i == 0:
+            print("Received answer from HMGET: ", res)
+
+if __name__ == "__main__":
+    one_op_workload()
+
 
 def init_redis(clientid):
     print("using mdl client utils!!")
@@ -16,30 +38,31 @@ def init_redis(clientid):
     print("Completed init")
 
 
-# Initialize Redis for client 0
-init_redis(0)
+def test_redis_correctness():
+    # Initialize Redis for client 0
+    init_redis(0)
 
-# Create users
-user1 = utils.create_user("alice", "password123")
-print("Created User 1:", user1)
+    # Create users
+    user1 = utils.create_user("alice", "password123")
+    print("Created User 1:", user1)
 
-user2 = utils.create_user("bob", "securepass")
-print("Created User 2:", user2)
+    user2 = utils.create_user("bob", "securepass")
+    print("Created User 2:", user2)
 
-# Fetch user keys
-print("Alice's user key:", utils.make_username_key("alice"))
-print("Bob's user key:", utils.make_username_key("bob"))
+    # Fetch user keys
+    print("Alice's user key:", utils.make_username_key("alice"))
+    print("Bob's user key:", utils.make_username_key("bob"))
 
-# Create a private room
-room, error = utils.create_private_room(user1["id"], user2["id"])
-if not error:
-    print("Created Private Room:", room)
+    # Create a private room
+    room, error = utils.create_private_room(user1["id"], user2["id"])
+    if not error:
+        print("Created Private Room:", room)
 
-# Send a message from Alice to the private room
-timestamp = int(time.time())  # Current UNIX timestamp
-workload.add_message(room["id"], user1["id"], "Hello, Bob!", timestamp)
-print(f"Alice sent a message at {timestamp}")
+    # Send a message from Alice to the private room
+    timestamp = int(time.time())  # Current UNIX timestamp
+    workload.add_message(room["id"], user1["id"], "Hello, Bob!", timestamp)
+    print(f"Alice sent a message at {timestamp}")
 
-# Fetch messages (should be empty initially)
-messages = utils.get_messages(room_id=room["id"])
-print("Messages in Room:", messages)
+    # Fetch messages (should be empty initially)
+    messages = utils.get_messages(room_id=room["id"])
+    print("Messages in Room:", messages)
