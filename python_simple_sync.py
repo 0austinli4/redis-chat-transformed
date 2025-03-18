@@ -10,10 +10,10 @@ def one_op_workload():
 
     print(f"DEBUG: Performing HMSET for user_key: {user_key}")
 
-    SyncAppRequest(
+    result = SyncAppRequest(
         "HMSET", user_key, {"username": "user", "password": "pass"}
     )
-    print(f"DEBUG: HMSET result: {SyncAppRequest("HMGET", user_key, "user")}")
+    print(f"DEBUG: HMSET result: {result}")
 
     results = []
     print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")

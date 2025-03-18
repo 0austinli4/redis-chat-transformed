@@ -15,7 +15,7 @@ def one_op_workload():
         "HMSET", user_key, {"username": "user", "password": "pass"}
     )
     res = AppResponse(future)
-    print(f"DEBUG: HMSET result: {SyncAppRequest("HMGET", user_key, "user")}")
+    print(f"DEBUG: HMSET result: ", res)
 
     results = []
     print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
