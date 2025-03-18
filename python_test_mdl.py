@@ -46,7 +46,7 @@ def add_message():
     pending_awaits = []
 
     # Perform 4 AppRequests
-    for _ in range(4):
+    for _ in range(1000):
         future = AppRequest("ZADD", room_id, content)
         pending_awaits.append(future)
 
@@ -61,6 +61,6 @@ def add_message_sync():
     results = []
 
     # Perform 4 AppRequests
-    for _ in range(4):
+    for _ in range(1000):
         res = SyncAppRequest("ZADD", room_id, content)
         results.append(res)
