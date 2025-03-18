@@ -5,19 +5,14 @@ from mdlin import AppRequest, AppResponse
 
 
 def one_op_workload():
-    room_id = 1
-    content = "Hello"
     user_key = "123"
 
     print(f"DEBUG: Performing HMSET for user_key: {user_key}")
 
-    future = AppRequest(
-        "HMSET", user_key, {"username": "user", "password": "pass"}
-    )
+    future = AppRequest("HMSET", user_key, "user", "1234567")
     res = AppResponse(future)
-    print(f"DEBUG: HMSET result: ", res)
+    print("DEBUG: HMSET result: ", res)
 
-    results = []
     print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
     for i in range(100):
@@ -25,8 +20,9 @@ def one_op_workload():
         res = AppResponse(future)
         if i == 0:
             print("Received answer from HMGET: ", res)
-    
+
     print("DEBUG: Completed HMGET iterations")
+
 
 if __name__ == "__main__":
     one_op_workload()
