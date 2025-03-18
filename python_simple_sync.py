@@ -5,21 +5,21 @@ from mdlin import SyncAppRequest
 
 
 def one_op_workload():
-    user_key = "123"
+    print("Calling sync, one op workload")
+    # print(f"DEBUG: Performing HMSET for user_key: {user_key}")
 
-    print(f"DEBUG: Performing HMSET for user_key: {user_key}")
+    # result = SyncAppRequest("HMSET", user_key, "user", "1234567")
+    # print(f"DEBUG: HMSET result: {result}")
 
-    result = SyncAppRequest("HMSET", user_key, "user", "1234567")
-    print(f"DEBUG: HMSET result: {result}")
-
-    print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
+    # print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
     for i in range(100):
-        res = SyncAppRequest("HMGET", user_key, "user")
+        SyncAppRequest("PUT", "key1", "value1")
+        put_result = SyncAppRequest("GET", "key1")
         if i == 0:
-            print("Received answer from HMGET, EXPECTED: 'pass': ", res)
+            print("Received answer from HMGET, EXPECTED: 'pass': ", put_result)
 
-    print("DEBUG: Completed HMGET iterations")
+    print("DEBUG: Completed PUT/GET iterations")
 
 
 if __name__ == "__main__":
