@@ -7,8 +7,7 @@ import argparse
 
 def one_op_workload():
     print("Calling sync, one op workload")
-    # print(f"DEBUG: Performing HMSET for user_key: {user_key}")
-
+    print("DEBUG: Performing simple put operation")
     # result = SyncAppRequest("HMSET", user_key, "user", "1234567")
     # print(f"DEBUG: HMSET result: {result}")
 

@@ -35,7 +35,8 @@ def add_message(room_id, from_id, content, timestamp):
         "message": content,
         "roomId": room_id,
     }
-    SyncAppRequest("ZADD", room_key, {json.dumps(message): int(message["date"])})
+    message_json = json.dumps(message)
+    SyncAppRequest("ZADD", room_key, message_json, str(timestamp))
 
 
 def create(clientid, explen):

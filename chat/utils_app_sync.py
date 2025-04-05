@@ -46,7 +46,7 @@ def get_messages(room_id=0, offset=0, size=50):
 def hmget(key, key2):
     """Wrapper around hmget to unpack bytes from hmget"""
     result = SyncAppRequest("HMGET", key, key2)
-    return list(map(lambda x: x.decode("utf-8"), result))
+    return list(result)
 
 
 def get_private_room_id(user1, user2):

@@ -1,7 +1,7 @@
 import time
 from chat import utils
 from chat import workload
-
+from mdlin import AppRequest, AppResponse
 
 
 def one_op_workload():
