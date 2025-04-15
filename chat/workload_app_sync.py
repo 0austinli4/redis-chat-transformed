@@ -17,7 +17,7 @@ messages = [
     "Next meeting tomorrow 10.00AM",
     "Wow that's great",
 ]
-
+SESSION_ID = None
 
 def math_random():
     return random.uniform(0, 1)
@@ -36,10 +36,13 @@ def add_message(room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
     message_json = json.dumps(message)
-    SyncAppRequest("ZADD", room_key, message_json, str(timestamp))
+    SyncAppRequest(SESSION_ID, "ZADD", room_key, message_json, str(timestamp))
 
 
-def create(clientid, explen):
+def create(session_id, clientid, explen):
+    global SESSION_ID
+    SESSION_ID = session_id
+
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
     t_end = int(time.time()) + int(explen)
     rampUp = 20
