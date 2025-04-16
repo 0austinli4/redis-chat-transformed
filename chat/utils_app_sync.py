@@ -5,7 +5,7 @@ import random
 import bcrypt
 from chat import workload_app_sync
 from chat.config import get_config
-from mdlin import SyncAppRequest
+from iocl import SyncAppRequest
 import sys
 
 SERVER_ID = random.uniform(0, 322321)

@@ -5,7 +5,7 @@ import numpy as np
 import json
 import random
 import time
-from mdlin import SyncAppRequest
+from iocl import SyncAppRequest
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
 greetings = ["Hello", "Hi", "Yo", "Hola"]

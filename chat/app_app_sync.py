@@ -25,15 +25,7 @@ def run_app_sync(client_id, client_type, explen):
     session_id = InitCustom()
     utils_app_sync.init_redis(client_id, explen)
     return
-    # sess.init_app(app)
-
-    # Fetch messages for the default room
-    # pending_awaits_messages, messages = utils.get_messages(room_id='0')
-    # pending_awaits.update(pending_awaits_messages)
-    # print(f"Fetched messages: {messages}")
-
-    # moved to this method bc it only applies to app.py direct launch
-    # Get port from the command-line arguments or environment variables
+    
     arg = sys.argv[1:]
     # TODO: js client is hardcoded to proxy all to 8000 port, maybe change it?
     port = int(os.environ.get("PORT", 8000))

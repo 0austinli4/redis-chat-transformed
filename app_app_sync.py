@@ -11,5 +11,5 @@ if __name__ == "__main__":
     parser.add_argument("--clientid", action="store", dest="clientid", default=0)
     parser.add_argument("--explen", action="store", dest="explen", default=0)
     args = parser.parse_args()
-
+    print("Running app sync", args.clientid)
     run_app_sync(args.clientid, "multi_paxos", args.explen)
