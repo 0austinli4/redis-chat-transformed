@@ -5,7 +5,7 @@ import numpy as np
 import json
 import random
 import time
-from iocl import SyncAppRequest
+from redisstore import SyncAppRequest
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
 greetings = ["Hello", "Hi", "Yo", "Hola"]

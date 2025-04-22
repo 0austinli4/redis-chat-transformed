@@ -1,23 +1,23 @@
 import time
 from chat import utils
 from chat import workload
-from mdlin import AppRequest, AppResponse
-
+from redisstore import AsyncSendRequest, AsyncGetResponse
+SESSION_ID = None
 
 def one_op_workload():
     user_key = "123"
 
     print(f"DEBUG: Performing HMSET for user_key: {user_key}")
 
-    future = AppRequest("HMSET", user_key, "user", "1234567")
-    res = AppResponse(future)
+    future = AsyncSendRequest("HMSET", user_key, "user", "1234567")
+    res = AsyncGetResponse(future)
     print("DEBUG: HMSET result: ", res)
 
     print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
     for i in range(100):
-        future = AppRequest("HMGET", user_key, "user")
-        res = AppResponse(future)
+        future = AsyncSendRequest("HMGET", user_key, "user")
+        res = AsyncGetResponse(future)
         if i == 0:
             print("Received answer from HMGET: ", res)
 
@@ -33,15 +33,17 @@ if __name__ == "__main__":
     one_op_workload()
 
 
-def init_redis(clientid):
+def init_redis(session_id, clientid):
     print("using mdl client utils!!")
+    global SESSION_ID
+    SESSION_ID = session_id
     pending_awaits = set()
-    future_0 = AppRequest("SET", "total_users", 0)
+    future_0 = AsyncSendRequest(SESSION_ID, "SET", "total_users", 0)
     pending_awaits.add(future_0)
-    future_1 = AppRequest("SET", f"room:0:name", "General")
+    future_1 = AsyncSendRequest(SESSION_ID, "SET", f"room:0:name", "General")
     pending_awaits.add(future_1)
     for future in pending_awaits:
-        AppResponse(future)
+        AsyncGetResponse(SESSION_ID, future)
     print("Completed init")
 
 

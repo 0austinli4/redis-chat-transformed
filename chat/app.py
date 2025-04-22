@@ -9,7 +9,7 @@ from flask_socketio import SocketIO
 from chat import utils
 from chat.config import get_config
 from chat.socketio_signals import io_connect, io_disconnect, io_join_room, io_on_message
-from mdlin import AppRequest, AppResponse, InitCustom
+from redisstore import AsyncSendRequest, AsyncGetResponse, InitCustom
 
 sess = Session()
 app = Flask(__name__, static_url_path="", static_folder="../client/build")

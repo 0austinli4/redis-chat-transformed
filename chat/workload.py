@@ -5,7 +5,7 @@ import numpy as np
 import json
 import random
 import time
-from mdlin import AppRequest, AppResponse
+from redisstore import AsyncSendRequest, AsyncGetResponse
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
 greetings = ["Hello", "Hi", "Yo", "Hola"]
@@ -37,14 +37,17 @@ def add_message(room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
 
-    future_0 = AppRequest("ZADD", room_key, {json.dumps(message): int(message["date"])})
+    future_0 = AsyncSendRequest("ZADD", room_key, {json.dumps(message): int(message["date"])})
     pending_awaits.add(future_0)
     for future in pending_awaits:
-        AppResponse(future)
+        AsyncGetResponse(future)
     return (pending_awaits, None)
 
 
-def create(clientid, explen):
+def create(session_id, clientid, explen):
+    global SESSION_ID
+    SESSION_ID = session_id
+
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
     t_end = int(time.time()) + int(explen)
     rampUp = 20
@@ -83,33 +86,3 @@ def create(clientid, explen):
             optype = api[selector]
             print(f"app,{lat}")
             print(f"{optype},{lat}")
-
-'''
-def simple_workload():
-    num_minutes = 1
-    api = ["create_user", "create_private_room", "add_message", "get_messages"]
-    t_end = time.time() + 50 * num_minutes
-
-    while time.time() < t_end:
-        before = time.time_ns()
-        selector = 1
-
-        key = 0
-        key2 = 1
-
-        future_0 = AppRequest("HMGET", key, key2)
-        future_1 = AppRequest("HMGET", key, key2)
-        future_2 = AppRequest("HMGET", key, key2)
-
-        AppResponse(future_0)
-        AppResponse(future_1)
-        AppResponse(future_2)
-
-        after = time.time_ns()
-        lat = after - before
-        optype = api[selector]
-        # file1.write(f'app,{lat}')
-        # file1.write(f'{optype},{lat}')
-        print(f"app,{lat}")
-        print(f"{optype},{lat}")
-'''

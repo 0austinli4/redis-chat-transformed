@@ -1,21 +1,17 @@
 import time
 from chat import utils_app_sync
 from chat import workload_app_sync
-from mdlin import SyncAppRequest
+from redisstore import SyncAppRequest, InitCustom
 import argparse
-
+SESSION_ID = None
 
 def one_op_workload():
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
-    # result = SyncAppRequest("HMSET", user_key, "user", "1234567")
-    # print(f"DEBUG: HMSET result: {result}")
-
-    # print(f"DEBUG: Starting HMGET iterations for user_key: {user_key}")
 
     for i in range(100):
-        SyncAppRequest("PUT", "key1", "value1")
-        put_result = SyncAppRequest("GET", "key1")
+        SyncAppRequest(SESSION_ID, "PUT", "key1", "value1")
+        put_result = SyncAppRequest(SESSION_ID, "GET", "key1")
         if i == 0:
             print("Received answer from HMGET, EXPECTED: 'pass': ", put_result)
 
@@ -28,19 +24,24 @@ if __name__ == "__main__":
     parser.add_argument("--explen", action="store", dest="explen", default=0)
     args = parser.parse_args()
     print("Received args", args)
+    session_id = redisstore.InitCustom()
+    global SESSION_ID
+    SESSION_ID = session_id
     one_op_workload()
 
-
-def init_redis(clientid):
+def init_redis(session_id, clientid):
     print("using paxos client utils!!")
-    SyncAppRequest("SET", "total_users", 0)
-    SyncAppRequest("SET", f"room:0:name", "General")
+    global SESSION_ID
+    SESSION_ID = session_id
+
+    SyncAppRequest(SESSION_ID, "SET", "total_users", 0)
+    SyncAppRequest(SESSION_ID, "SET", f"room:0:name", "General")
     print("Completed init")
 
 
 def sequential_redis():
     # Initialize Redis for client 0
-    init_redis(0)
+    # init_redis(0)
 
     # Create users
     user1 = utils_app_sync.create_user("alice", "password123")

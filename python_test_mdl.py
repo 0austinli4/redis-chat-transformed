@@ -6,7 +6,7 @@ import sys
 import bcrypt
 import time
 from chat.config import get_config
-from mdlin import AppRequest, AppResponse, SyncAppRequest
+from redisstore import AsyncSendRequest, AsyncGetResponse, SyncAppRequest
 
 SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client
@@ -45,13 +45,12 @@ def add_message():
 
     pending_awaits = []
 
-    # Perform 4 AppRequests
     for _ in range(1000):
-        future = AppRequest("ZADD", room_id, content)
+        future = AsyncSendRequest("ZADD", room_id, content)
         pending_awaits.append(future)
 
     for future_await in pending_awaits:
-        AppResponse(future_await)
+        AsyncGetResponse(future_await)
 
 
 def add_message_sync():
