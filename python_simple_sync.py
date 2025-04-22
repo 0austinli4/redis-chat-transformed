@@ -25,6 +25,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("Received args", args)
     session_id = redisstore.InitCustom()
+    print("GOT SESSION ID", session_id)
     global SESSION_ID
     SESSION_ID = session_id
     one_op_workload()
@@ -62,7 +63,7 @@ def sequential_redis():
     # Send a message from Alice to the private room
     timestamp = int(time.time())  # Current UNIX timestamp
     workload_app_sync.add_message(room["id"], user1["id"], "Hello, Bob!", timestamp)
-    print(f"Alice sent a message at {timestamp}")
+    print("Alice sent a message at", timestamp)
 
     # Fetch messages (should be empty initially)
     messages = utils_app_sync.get_messages(room_id=room["id"])
