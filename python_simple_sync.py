@@ -15,10 +15,10 @@ def one_op_workload(session_id):
     print("DEBUG: Completed PUT/GET iterations")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Short sample app")
-    parser.add_argument("--clientid", action="store", dest="clientid", default=0)
-    parser.add_argument("--explen", action="store", dest="explen", default=0)
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Short sample app")
+    # parser.add_argument("--clientid", action="store", dest="clientid", default=0)
+    # parser.add_argument("--explen", action="store", dest="explen", default=0)
+    # args = parser.parse_args()
     print('Initializing client')
     print("Received args", args)
     session_id = InitCustom()
