@@ -35,7 +35,7 @@ def init_redis(session_id, clientid):
     SESSION_ID = session_id
 
     SyncAppRequest(SESSION_ID, "SET", "total_users", 0)
-    SyncAppRequest(SESSION_ID, "SET", f"room:0:name", "General")
+    SyncAppRequest(SESSION_ID, "SET", "room:0:name", "General")
     print("Completed init")
 
 
