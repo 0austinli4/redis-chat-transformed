@@ -1,30 +1,20 @@
-import json
 import os
-import os.path
-import redisstore
+import json
 
 
 def load_config_and_set_env(config_path):
     """Load JSON config and set environment variables for C++ binding"""
-
     print(f"Loading config from: {config_path}")
-
     with open(config_path, "r") as f:
         config = json.load(f)
-
-    # Get the directory containing the config file for resolving relative paths
     config_dir = os.path.dirname(os.path.abspath(config_path))
-
-    # Map JSON keys to environment variable names
     env_mapping = {
-        # Basic benchmark settings
         "benchmark_name": "IOCL_BENCHMARK",
         "bench_mode": "IOCL_BENCH_MODE",
         "client_experiment_length": "IOCL_EXP_DURATION",
         "client_ramp_up": "IOCL_WARMUP_SECS",
         "client_ramp_down": "IOCL_COOLDOWN_SECS",
         "tput_interval": "IOCL_TPUT_INTERVAL",
-        # Client behavior parameters
         "client_message_timeout": "IOCL_MESSAGE_TIMEOUT",
         "client_abort_backoff": "IOCL_ABORT_BACKOFF",
         "client_retry_aborted": "IOCL_RETRY_ABORTED",
@@ -32,22 +22,16 @@ def load_config_and_set_env(config_path):
         "client_max_attempts": "IOCL_MAX_ATTEMPTS",
         "client_fanout": "IOCL_CLIENT_FANOUT",
         "client_issue_concurrent": "IOCL_CLIENT_ISSUE_CONCURRENT",
-        # Client timing and behavior
         "mpl": "IOCL_MPL",
         "client_key_selector": "IOCL_CLIENT_KEY_SELECTOR",
         "client_zipf_coefficient": "IOCL_CLIENT_ZIPF_COEFFICIENT",
         "rw_num_ops_txn": "IOCL_RW_NUM_OPS_TXN",
         "client_num_keys": "IOCL_CLIENT_NUM_KEYS",
-        # Protocol and consistency
         "replication_protocol": "IOCL_REPLICATION_PROTOCOL",
         "client_protocol_mode": "IOCL_PROTOCOL_MODE",
         "consistency": "IOCL_CONSISTENCY",
-        # Network and system settings - SKIP THESE if already set by command line
         "client_id": "IOCL_CLIENT_ID",
         "num_shards": "IOCL_NUM_SHARDS",
-        # 'replica_config': 'IOCL_REPLICA_CONFIG_PATHS',  # SKIP - use command line
-        # 'network_config': 'IOCL_NET_CONFIG_PATH',       # SKIP - use command line
-        # Additional fields from the JSON
         "server_port": "IOCL_SERVER_PORT",
         "truetime_error": "IOCL_CLOCK_ERROR",
         "server_load_time": "IOCL_SERVER_LOAD_TIME",
@@ -67,29 +51,19 @@ def load_config_and_set_env(config_path):
         "client_gc_debug_trace": "IOCL_CLIENT_GC_DEBUG_TRACE",
         "client_cpuprofile": "IOCL_CLIENT_CPUPROFILE",
     }
-
-    # Set environment variables
     for json_key, env_name in env_mapping.items():
         if json_key in config:
             value = config[json_key]
-
-            # Handle list values (like consistency which is ["lin"])
             if isinstance(value, list):
-                value = value[0]  # Take first value
-
-            # Convert to string and set environment variable
+                value = value[0]
             os.environ[env_name] = str(value)
             print(f"Set {env_name} = {value}")
-
-    # Handle nested config (like replication_protocol_settings)
     if "replication_protocol_settings" in config:
         rps = config["replication_protocol_settings"]
         if "message_transport_type" in rps:
             transport_type = rps["message_transport_type"]
             os.environ["IOCL_TRANSPORT_PROTOCOL"] = transport_type
             print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
-
-    # Handle client timing parameters that might be missing
     if "client_arrival_rate" not in config:
         os.environ["IOCL_CLIENT_ARRIVAL_RATE"] = "1.0"
     if "client_think_time" not in config:
@@ -98,15 +72,10 @@ def load_config_and_set_env(config_path):
         os.environ["IOCL_CLIENT_STAY_PROBABILITY"] = "0.5"
     if "client_switch_probability" not in config:
         os.environ["IOCL_CLIENT_SWITCH_PROBABILITY"] = "0.0"
-
-    # Handle missing boolean flags
     if "IOCL_DEBUG_STATS" not in os.environ:
         os.environ["IOCL_DEBUG_STATS"] = "false"
     if "IOCL_DEBUG_OUTPUT" not in os.environ:
         os.environ["IOCL_DEBUG_OUTPUT"] = "false"
-
-    # SKIP resolving config paths if they were set by command line
-    # This prevents JSON config from overriding command-line paths
     if (
         "IOCL_REPLICA_CONFIG_PATHS" not in os.environ
         and "IOCL_NET_CONFIG_PATH" not in os.environ
@@ -117,25 +86,18 @@ def load_config_and_set_env(config_path):
         print(
             "Command-line config paths detected, skipping JSON config path resolution"
         )
-
     print("Environment variables set successfully")
 
 
 def resolve_config_paths(config, config_dir):
-    """Resolve relative config file paths to absolute paths"""
-
-    # Map of config keys to environment variable names for file paths
     path_mapping = {
         "replica_config": "IOCL_REPLICA_CONFIG_PATHS",
         "network_config": "IOCL_NET_CONFIG_PATH",
         "shard_config": "IOCL_SHARD_CONFIG_PATH",
     }
-
     for config_key, env_name in path_mapping.items():
         if config_key in config:
             file_path = config[config_key]
-
-            # If it's a relative path, make it absolute
             if not os.path.isabs(file_path):
                 abs_path = os.path.join(config_dir, file_path)
                 os.environ[env_name] = abs_path
@@ -143,173 +105,53 @@ def resolve_config_paths(config, config_dir):
             else:
                 os.environ[env_name] = file_path
                 print(f"Using absolute path for {config_key}: {file_path}")
-
-    # Handle replica config format string for multiple shards
     if "replica_config_format_str" in config and "num_shards" in config:
         format_str = config["replica_config_format_str"]
         num_shards = config["num_shards"]
-
         replica_paths = []
         for i in range(num_shards):
-            # Replace %d with shard number
             relative_path = format_str.replace("%d", str(i))
             abs_path = os.path.join(config_dir, relative_path)
             replica_paths.append(abs_path)
-
-        # Join multiple paths with comma (as expected by the C++ binding)
         replica_paths_str = ",".join(replica_paths)
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = replica_paths_str
         print(f"Set IOCL_REPLICA_CONFIG_PATHS = {replica_paths_str}")
-
-    # Handle shard config format string
     if "shard_config_format_str" in config and "num_shards" in config:
         format_str = config["shard_config_format_str"]
         num_shards = config["num_shards"]
-
         shard_paths = []
         for i in range(num_shards):
             relative_path = format_str.replace("%d", str(i))
             abs_path = os.path.join(config_dir, relative_path)
             shard_paths.append(abs_path)
-
         shard_paths_str = ",".join(shard_paths)
         os.environ["IOCL_SHARD_CONFIG_PATHS"] = shard_paths_str
         print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
 
 
 def set_env_from_command_line_args(args):
-    """Set environment variables from command line arguments"""
-
-    # Set client ID
     if args.clientid is not None:
         os.environ["IOCL_CLIENT_ID"] = str(args.clientid)
         print(f"Set IOCL_CLIENT_ID = {args.clientid}")
-
-    # Set number of keys
     if args.num_keys is not None:
         os.environ["IOCL_CLIENT_NUM_KEYS"] = str(args.num_keys)
         print(f"Set IOCL_CLIENT_NUM_KEYS = {args.num_keys}")
-
-    # Set number of shards
     if args.num_shards is not None:
         os.environ["IOCL_NUM_SHARDS"] = str(args.num_shards)
         print(f"Set IOCL_NUM_SHARDS = {args.num_shards}")
-
-    # Set replica config paths (this is the critical one!)
     if args.replica_config_paths is not None:
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = args.replica_config_paths
         print(f"Set IOCL_REPLICA_CONFIG_PATHS = {args.replica_config_paths}")
-
-    # Set network config path (this is the other critical one!)
     if args.net_config_path is not None:
         os.environ["IOCL_NET_CONFIG_PATH"] = args.net_config_path
         print(f"Set IOCL_NET_CONFIG_PATH = {args.net_config_path}")
-
-    # Set client host
     if args.client_host is not None:
         os.environ["IOCL_CLIENT_HOST"] = args.client_host
         print(f"Set IOCL_CLIENT_HOST = {args.client_host}")
-
-    # Set transport protocol
     if args.trans_protocol is not None:
         os.environ["IOCL_TRANSPORT_PROTOCOL"] = args.trans_protocol
         print(f"Set IOCL_TRANSPORT_PROTOCOL = {args.trans_protocol}")
 
 
-# Usage function
 def init_benchmark_with_config(config_path):
-    """Load config and set environment variables"""
     load_config_and_set_env(config_path)
-    # Note: C++ binding is now called separately in the main flow
-
-
-def one_op_workload(session_id):
-    print("Calling sync, one op workload")
-    print("DEBUG: Performing simple put operation")
-    for i in range(100):
-        result = redisstore.send_request(
-            session_id, redisstore.Operation.PUT, 1, "value1"
-        )
-        print(result)
-    print("DEBUG: Completed PUT/GET iterations")
-
-
-if __name__ == "__main__":
-    import argparse
-    import sys
-
-    parser = argparse.ArgumentParser(description="IOCL Benchmark Client")
-
-    # Existing arguments
-    parser.add_argument(
-        "--config",
-        action="store",
-        dest="config_path",
-        default="/users/akalaba/IOCL/experiments/configs/1shard_transformed_test.json",
-        help="Path to the JSON configuration file",
-    )
-    parser.add_argument(
-        "--explen",
-        action="store",
-        dest="explen",
-        default=30,
-        help="Experiment length override",
-    )
-
-    # New arguments
-    parser.add_argument("--clientid", type=int, default=0, help="Client ID")
-    parser.add_argument("--num_keys", type=int, default=1000000, help="Number of keys")
-    parser.add_argument("--num_shards", type=int, default=1, help="Number of shards")
-    parser.add_argument(
-        "--replica_config_paths", type=str, help="Path(s) to replica config(s)"
-    )
-    parser.add_argument("--net_config_path", type=str, help="Path to network config")
-    parser.add_argument(
-        "--client_host", type=str, default="localhost", help="Client host name"
-    )
-    parser.add_argument(
-        "--trans_protocol",
-        type=str,
-        choices=["tcp", "udp"],
-        default="tcp",
-        help="Transport protocol",
-    )
-
-    args = parser.parse_args()
-
-    # Print out all arguments
-    print("Initializing client with the following parameters:")
-    print(f"Config Path: {args.config_path}")
-    print(f"Experiment Length: {args.explen}")
-    print(f"Client ID: {args.clientid}")
-    print(f"Number of Keys: {args.num_keys}")
-    print(f"Number of Shards: {args.num_shards}")
-    print(f"Replica Config Paths: {args.replica_config_paths}")
-    print(f"Network Config Path: {args.net_config_path}")
-    print(f"Client Host: {args.client_host}")
-    print(f"Transport Protocol: {args.trans_protocol}")
-
-    try:
-        # First, set environment variables from command line arguments
-        # This takes precedence over the JSON config file
-        set_env_from_command_line_args(args)
-
-        # Then load the JSON config file (for any additional settings)
-        # The JSON config will NOT override config paths if they were set by command line
-        init_benchmark_with_config(args.config_path)
-
-        # Now call the C++ binding
-        import redisstore
-
-        session_id = redisstore.custom_init_session()
-        print("GOT SESSION ID", session_id)
-        one_op_workload(session_id)  # Fixed: pass session_id parameter
-    except FileNotFoundError:
-        print(f"Error: Config file not found at {args.config_path}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error initializing client: {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)

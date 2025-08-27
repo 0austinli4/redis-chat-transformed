@@ -5,7 +5,14 @@ import numpy as np
 import json
 import random
 import time
-from redisstore import SyncAppRequest
+
+try:
+    import redisstore
+except ImportError:
+    redisstore = None
+    print(
+        "Warning: redisstore module could not be imported. Make sure redisstore.cpython-311-darwin.so is available."
+    )
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
 greetings = ["Hello", "Hi", "Yo", "Hola"]
@@ -18,6 +25,7 @@ messages = [
     "Wow that's great",
 ]
 SESSION_ID = None
+
 
 def math_random():
     return random.uniform(0, 1)
@@ -36,7 +44,10 @@ def add_message(room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
     message_json = json.dumps(message)
-    SyncAppRequest(SESSION_ID, "ZADD", room_key, message_json, str(timestamp))
+    # Use redisstore.send_request as in python_simple_sync
+    redisstore.send_request(
+        SESSION_ID, redisstore.Operation.PUT, room_key, message_json
+    )
 
 
 def create(session_id, clientid, explen):
@@ -49,7 +60,7 @@ def create(session_id, clientid, explen):
     rampDown = 10
 
     selector = 0
-    
+
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
         before = time.time_ns()
@@ -76,7 +87,7 @@ def create(session_id, clientid, explen):
             room_id = np.random.uniform(0, 1e9)
             utils_app_sync.get_messages(room_id)
         after = time.time_ns()
-        if rampUp <= int(time.time()) and int(time.time()) < (t_end-rampDown):
+        if rampUp <= int(time.time()) and int(time.time()) < (t_end - rampDown):
             lat = after - before
             optype = api[selector]
             print(f"app,{lat}")
