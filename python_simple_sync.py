@@ -2,6 +2,7 @@ import json
 import os
 import os.path
 import redisstore
+from config_env import set_env_from_command_line_args, init_benchmark_with_config
 
 
 def load_config_and_set_env(config_path):
@@ -177,52 +178,6 @@ def resolve_config_paths(config, config_dir):
         print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
 
 
-def set_env_from_command_line_args(args):
-    """Set environment variables from command line arguments"""
-
-    # Set client ID
-    if args.clientid is not None:
-        os.environ["IOCL_CLIENT_ID"] = str(args.clientid)
-        print(f"Set IOCL_CLIENT_ID = {args.clientid}")
-
-    # Set number of keys
-    if args.num_keys is not None:
-        os.environ["IOCL_CLIENT_NUM_KEYS"] = str(args.num_keys)
-        print(f"Set IOCL_CLIENT_NUM_KEYS = {args.num_keys}")
-
-    # Set number of shards
-    if args.num_shards is not None:
-        os.environ["IOCL_NUM_SHARDS"] = str(args.num_shards)
-        print(f"Set IOCL_NUM_SHARDS = {args.num_shards}")
-
-    # Set replica config paths (this is the critical one!)
-    if args.replica_config_paths is not None:
-        os.environ["IOCL_REPLICA_CONFIG_PATHS"] = args.replica_config_paths
-        print(f"Set IOCL_REPLICA_CONFIG_PATHS = {args.replica_config_paths}")
-
-    # Set network config path (this is the other critical one!)
-    if args.net_config_path is not None:
-        os.environ["IOCL_NET_CONFIG_PATH"] = args.net_config_path
-        print(f"Set IOCL_NET_CONFIG_PATH = {args.net_config_path}")
-
-    # Set client host
-    if args.client_host is not None:
-        os.environ["IOCL_CLIENT_HOST"] = args.client_host
-        print(f"Set IOCL_CLIENT_HOST = {args.client_host}")
-
-    # Set transport protocol
-    if args.trans_protocol is not None:
-        os.environ["IOCL_TRANSPORT_PROTOCOL"] = args.trans_protocol
-        print(f"Set IOCL_TRANSPORT_PROTOCOL = {args.trans_protocol}")
-
-
-# Usage function
-def init_benchmark_with_config(config_path):
-    """Load config and set environment variables"""
-    load_config_and_set_env(config_path)
-    # Note: C++ binding is now called separately in the main flow
-
-
 def one_op_workload(session_id):
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
@@ -232,6 +187,80 @@ def one_op_workload(session_id):
         )
         print(result)
     print("DEBUG: Completed PUT/GET iterations")
+
+
+def random_op_workload(session_id, experiment_len=30):
+    """Run random redisstore operations for experiment_len seconds."""
+    import random
+    import time
+
+    op_types = [
+        redisstore.Operation.PUT,
+        redisstore.Operation.GET,
+        redisstore.Operation.INCR,
+        redisstore.Operation.SET,
+        redisstore.Operation.SADD,
+        redisstore.Operation.EXISTS,
+        redisstore.Operation.HMSET,
+        redisstore.Operation.HSET,
+        redisstore.Operation.HMGET,
+        redisstore.Operation.HGETALL,
+        redisstore.Operation.ZADD,
+        redisstore.Operation.ZINCRBY,
+        redisstore.Operation.ZSCORE,
+        redisstore.Operation.ZREVRANGE,
+        redisstore.Operation.ZRANGE,
+    ]
+    start = time.time()
+    while time.time() - start < experiment_len:
+        op = random.choice(op_types)
+        key = f"key{random.randint(1, 100)}"
+        value = f"val{random.randint(1, 100)}"
+        old_value = f"old{random.randint(1, 100)}"
+        try:
+            if op == redisstore.Operation.PUT:
+                result = redisstore.send_request(session_id, op, key, value)
+            elif op == redisstore.Operation.GET:
+                result = redisstore.send_request(session_id, op, key, "")
+            elif op == redisstore.Operation.INCR:
+                result = redisstore.send_request(session_id, op, key, "")
+            elif op == redisstore.Operation.SET:
+                result = redisstore.send_request(session_id, op, key, value)
+            elif op == redisstore.Operation.SADD:
+                result = redisstore.send_request(session_id, op, key, value)
+            elif op == redisstore.Operation.EXISTS:
+                result = redisstore.send_request(session_id, op, key, "")
+            elif op == redisstore.Operation.HMSET:
+                # For demo, use a JSON string as hash
+                hash_val = '{"field1": "val1", "field2": "val2"}'
+                result = redisstore.send_request(session_id, op, key, hash_val)
+            elif op == redisstore.Operation.HSET:
+                result = redisstore.send_request(session_id, op, key, value, old_value)
+            elif op == redisstore.Operation.HMGET:
+                result = redisstore.send_request(session_id, op, key, value)
+            elif op == redisstore.Operation.HGETALL:
+                result = redisstore.send_request(session_id, op, key, "")
+            elif op == redisstore.Operation.ZADD:
+                result = redisstore.send_request(session_id, op, key, value, old_value)
+            elif op == redisstore.Operation.ZINCRBY:
+                result = redisstore.send_request(session_id, op, key, value, old_value)
+            elif op == redisstore.Operation.ZSCORE:
+                result = redisstore.send_request(session_id, op, key, value)
+            elif (
+                op == redisstore.Operation.ZREVRANGE
+                or op == redisstore.Operation.ZRANGE
+            ):
+                start_idx = str(random.randint(0, 10))
+                stop_idx = str(random.randint(11, 20))
+                result = redisstore.send_request(
+                    session_id, op, key, start_idx, stop_idx
+                )
+            else:
+                result = None
+            print(f"{op.name}: {result}")
+        except Exception as e:
+            print(f"Error running {op.name}: {e}")
+        time.sleep(0.05)  # Small delay to avoid spamming
 
 
 if __name__ == "__main__":
@@ -303,7 +332,7 @@ if __name__ == "__main__":
 
         session_id = redisstore.custom_init_session()
         print("GOT SESSION ID", session_id)
-        one_op_workload(session_id)  # Fixed: pass session_id parameter
+        random_op_workload(session_id)  # Fixed: pass session_id parameter
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")
         sys.exit(1)
