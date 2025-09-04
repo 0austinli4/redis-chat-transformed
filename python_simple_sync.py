@@ -1,8 +1,10 @@
 import json
 import os
 import os.path
-import redisstore
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
+import select
+import redisstore
+from redisstore import async_send_request, await_asynch_response
 
 
 def load_config_and_set_env(config_path):
@@ -177,12 +179,47 @@ def resolve_config_paths(config, config_dir):
         os.environ["IOCL_SHARD_CONFIG_PATHS"] = shard_paths_str
         print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
 
+def send_request_and_await(session_id, operation, key, new_val, old_val):
+    """
+    Sends a request to the C++ layer and blocks until the response is ready.
+
+    Args:
+        session_id (int): The session ID.
+        operation (int): The operation to perform.
+        key (int): The key for the operation.
+        new_val (object): The new value for the operation.
+        old_val (object): The old value for the operation.
+
+    Returns:
+        tuple: A tuple containing the success status and the result value.
+    """
+    success, efd_or_result = async_send_request(
+        session_id, operation, key, new_val, old_val
+    )
+
+    if success:
+        # If the result is directly returned, no need to block
+        return success, efd_or_result
+
+    # If efd_or_result is an event file descriptor, block on it
+    efd = efd_or_result
+    r, _, _ = select.select([efd], [], [])
+    if r:
+        # Drain the eventfd counter
+        os.read(efd, 8)
+        # Now ask C++ for the result
+        result = await_asynch_response(session_id)
+        # Close the event file descriptor
+        os.close(efd)
+        return True, result
+
+    return False, None
 
 def one_op_workload(session_id):
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
     for i in range(100):
-        result = redisstore.send_request(
+        result = send_request_and_await(
             session_id, redisstore.Operation.PUT, 1, "value1"
         )
         print(result)
@@ -269,7 +306,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="IOCL Benchmark Client")
 
-    # Existing arguments
     parser.add_argument(
         "--config",
         action="store",
@@ -284,15 +320,20 @@ if __name__ == "__main__":
         default=30,
         help="Experiment length override",
     )
-
-    # New arguments
+    parser.add_argument("--warmup_secs", type=int, default=0, help="Warmup seconds")
+    parser.add_argument("--cooldown_secs", type=int, default=0, help="Cooldown seconds")
     parser.add_argument("--clientid", type=int, default=0, help="Client ID")
     parser.add_argument("--num_keys", type=int, default=1000000, help="Number of keys")
     parser.add_argument("--num_shards", type=int, default=1, help="Number of shards")
     parser.add_argument(
-        "--replica_config_paths", type=str, help="Path(s) to replica config(s)"
+        "--replica_config_paths",
+        type=str,
+        default="",
+        help="Path(s) to replica config(s)",
     )
-    parser.add_argument("--net_config_path", type=str, help="Path to network config")
+    parser.add_argument(
+        "--net_config_path", type=str, default="", help="Path to network config"
+    )
     parser.add_argument(
         "--client_host", type=str, default="localhost", help="Client host name"
     )
@@ -303,6 +344,18 @@ if __name__ == "__main__":
         default="tcp",
         help="Transport protocol",
     )
+
+    parser.add_argument("--partitioner", type=str, default="", help="Partitioner type")
+    parser.add_argument("--key_selector", type=str, default="", help="Key selector")
+    parser.add_argument(
+        "--zipf_coefficient", type=float, default=0.0, help="Zipf coefficient"
+    )
+    parser.add_argument("--debug_stats", action="store_true", help="Enable debug stats")
+    parser.add_argument("--delay", type=int, default=0, help="Random delay")
+    parser.add_argument(
+        "--ping_replicas", type=str, default="", help="Ping replicas flag"
+    )
+    parser.add_argument("--stats_file", type=str, default="", help="Stats file path")
 
     args = parser.parse_args()
 
@@ -332,7 +385,7 @@ if __name__ == "__main__":
 
         session_id = redisstore.custom_init_session()
         print("GOT SESSION ID", session_id)
-        random_op_workload(session_id)  # Fixed: pass session_id parameter
+        one_op_workload(session_id)
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")
         sys.exit(1)
