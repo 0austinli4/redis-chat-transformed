@@ -4,7 +4,7 @@ import os.path
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
 import select
 import redisstore
-from redisstore import async_send_request, async_get_response, ValueType
+from redisstore import async_send_request, async_get_response, ValueType, start_transport
 
 
 def load_config_and_set_env(config_path):
@@ -454,6 +454,7 @@ if __name__ == "__main__":
 
         session_id = redisstore.custom_init_session()
         print("GOT SESSION ID", session_id)
+        redisstore.start_transport()
         one_op_workload(session_id)
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")
