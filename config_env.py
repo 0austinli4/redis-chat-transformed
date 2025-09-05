@@ -57,13 +57,13 @@ def load_config_and_set_env(config_path):
             if isinstance(value, list):
                 value = value[0]
             os.environ[env_name] = str(value)
-            print(f"Set {env_name} = {value}")
+            # print(f"Set {env_name} = {value}")
     if "replication_protocol_settings" in config:
         rps = config["replication_protocol_settings"]
         if "message_transport_type" in rps:
             transport_type = rps["message_transport_type"]
             os.environ["IOCL_TRANSPORT_PROTOCOL"] = transport_type
-            print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
+            # print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
     if "client_arrival_rate" not in config:
         os.environ["IOCL_CLIENT_ARRIVAL_RATE"] = "1.0"
     if "client_think_time" not in config:

@@ -227,6 +227,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         f"efd_or_result={efd_or_result}, session_id={session_id}"
     )
     # Call AwaitAsynchResponse to check for the result or get the efd
+    print("[PYTHON] Calling async_get_response")
     success, efd_or_result = async_get_response(session_id, efd_or_result)
 
     if success:
@@ -256,8 +257,8 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
     # If efd_or_result is an event file descriptor, block on it
     efd = efd_or_result
-    print(f"Blocking on eventfd for session_id={session_id}, key={key}")
-    timeout = 10  # Timeout in seconds
+    print(f"Blocking on eventfd for session_id={session_id}, key={key}, efd={efd}")
+    timeout = 20 # number of seconds of timeout  
     r, _, _ = select.select([efd], [], [], timeout)
     if not r:
         print(
@@ -272,6 +273,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         # Close the event file descriptor
         os.close(efd)
 
+        # call async get response again to get actual value
         success, result = async_get_response(session_id)
         if success:
             print(
@@ -286,7 +288,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 def one_op_workload(session_id):
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
-    for i in range(100):
+    for i in range(10):
         result = send_request_and_await(
             session_id, redisstore.Operation.PUT, 1, "value1", "oldvalue1"
         )
@@ -336,7 +338,6 @@ def random_op_workload(session_id, experiment_len=30):
             elif op == redisstore.Operation.EXISTS:
                 result = redisstore.send_request(session_id, op, key, "")
             elif op == redisstore.Operation.HMSET:
-                # For demo, use a JSON string as hash
                 hash_val = '{"field1": "val1", "field2": "val2"}'
                 result = redisstore.send_request(session_id, op, key, hash_val)
             elif op == redisstore.Operation.HSET:
@@ -365,7 +366,7 @@ def random_op_workload(session_id, experiment_len=30):
             print(f"{op.name}: {result}")
         except Exception as e:
             print(f"Error running {op.name}: {e}")
-        time.sleep(0.05)  # Small delay to avoid spamming
+        time.sleep(0.05) # small sleep
 
 
 if __name__ == "__main__":
