@@ -4,7 +4,7 @@ import os.path
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
 import select
 import redisstore
-from redisstore import async_send_request, await_asynch_response
+from redisstore import async_send_request, async_get_response, ValueType
 
 
 def load_config_and_set_env(config_path):
@@ -82,7 +82,7 @@ def load_config_and_set_env(config_path):
 
             # Convert to string and set environment variable
             os.environ[env_name] = str(value)
-            print(f"Set {env_name} = {value}")
+            # print(f"Set {env_name} = {value}")
 
     # Handle nested config (like replication_protocol_settings)
     if "replication_protocol_settings" in config:
@@ -90,7 +90,7 @@ def load_config_and_set_env(config_path):
         if "message_transport_type" in rps:
             transport_type = rps["message_transport_type"]
             os.environ["IOCL_TRANSPORT_PROTOCOL"] = transport_type
-            print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
+            # print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
 
     # Handle client timing parameters that might be missing
     if "client_arrival_rate" not in config:
@@ -116,10 +116,6 @@ def load_config_and_set_env(config_path):
     ):
         print("No command-line config paths detected, resolving from JSON config")
         resolve_config_paths(config, config_dir)
-    else:
-        print(
-            "Command-line config paths detected, skipping JSON config path resolution"
-        )
 
     print("Environment variables set successfully")
 
@@ -162,7 +158,7 @@ def resolve_config_paths(config, config_dir):
         # Join multiple paths with comma (as expected by the C++ binding)
         replica_paths_str = ",".join(replica_paths)
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = replica_paths_str
-        print(f"Set IOCL_REPLICA_CONFIG_PATHS = {replica_paths_str}")
+        # print(f"Set IOCL_REPLICA_CONFIG_PATHS = {replica_paths_str}")
 
     # Handle shard config format string
     if "shard_config_format_str" in config and "num_shards" in config:
@@ -177,7 +173,8 @@ def resolve_config_paths(config, config_dir):
 
         shard_paths_str = ",".join(shard_paths)
         os.environ["IOCL_SHARD_CONFIG_PATHS"] = shard_paths_str
-        print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
+        # print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
+
 
 def send_request_and_await(session_id, operation, key, new_val, old_val):
     """
@@ -192,35 +189,106 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
     Returns:
         tuple: A tuple containing the success status and the result value.
+
+    Raises:
+        RuntimeError: If AsyncSendRequest fails.
     """
+    print(f"Sending request: session_id={session_id}, operation={operation}, key={key}")
+
+    # Call the C++ AsyncSendRequest function
     success, efd_or_result = async_send_request(
         session_id, operation, key, new_val, old_val
     )
 
+    if not success:
+        print(
+            f"AsyncSendRequest failed for session_id={session_id}, operation={operation}, key={key}"
+        )
+        raise RuntimeError("AsyncSendRequest failed")
+
+    # Extract the integer value from efd_or_result if it is a Value object
+    if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
+        try:
+            efd_or_result = int(efd_or_result.str)
+            print("POST conversion: result as Value object:", efd_or_result)
+        except ValueError:
+            print(f"Failed to convert Value.str to int: {efd_or_result.str}")
+            raise RuntimeError("Invalid Value object returned by async_send_request")
+
+    # Ensure efd_or_result is an integer
+    try:
+        efd_or_result = int(efd_or_result)
+    except ValueError:
+        print(f"Failed to convert efd_or_result to int: {efd_or_result}")
+        raise RuntimeError("Invalid efd_or_result returned by async_send_request")
+    
+    print(
+        f"Right before await async response: "
+        f"efd_or_result={efd_or_result}, session_id={session_id}"
+    )
+    # Call AwaitAsynchResponse to check for the result or get the efd
+    success, efd_or_result = async_get_response(session_id, efd_or_result)
+
     if success:
         # If the result is directly returned, no need to block
+        print(f"Request succeeded: session_id={session_id}, key={key}")
         return success, efd_or_result
+    else:
+        print(
+            f"Request pending, need to block: session_id={session_id}, key={key}, efd_or_result={efd_or_result}"
+        )
+    print("Converting the request asynch await response")
+
+    # Extract integer value from Value object if necessary
+    if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
+        try:
+            efd_or_result = int(efd_or_result.str)
+        except ValueError:
+            print(f"Failed to convert Value.str to int: {efd_or_result.str}")
+            raise RuntimeError("Invalid Value object returned by async_get_response")
+
+    # If efd_or_result is not a valid file descriptor, raise an error
+    if not isinstance(efd_or_result, int) or efd_or_result < 0:
+        print(f"Invalid event file descriptor: {efd_or_result}")
+        raise RuntimeError(
+            "Invalid event file descriptor returned by async_get_response"
+        )
 
     # If efd_or_result is an event file descriptor, block on it
     efd = efd_or_result
-    r, _, _ = select.select([efd], [], [])
+    print(f"Blocking on eventfd for session_id={session_id}, key={key}")
+    timeout = 10  # Timeout in seconds
+    r, _, _ = select.select([efd], [], [], timeout)
+    if not r:
+        print(
+            f"Timeout occurred while waiting for eventfd: session_id={session_id}, key={key}"
+        )
+        raise TimeoutError("AwaitAsynchResponse timed out")
+
     if r:
         # Drain the eventfd counter
         os.read(efd, 8)
-        # Now ask C++ for the result
-        result = await_asynch_response(session_id)
+
         # Close the event file descriptor
         os.close(efd)
-        return True, result
 
-    return False, None
+        success, result = async_get_response(session_id)
+        if success:
+            print(
+                f"Result received: session_id={session_id}, key={key}, result={result}"
+            )
+            return success, result
+        else:
+            print(f"Failed to retrieve result for session_id={session_id}, key={key}")
+            raise RuntimeError("Failed to retrieve result after unblocking")
+
 
 def one_op_workload(session_id):
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
     for i in range(100):
         result = send_request_and_await(
-            session_id, redisstore.Operation.PUT, 1, "value1"
+            session_id, redisstore.Operation.PUT, 1, "value1", "oldvalue1"
         )
         print(result)
     print("DEBUG: Completed PUT/GET iterations")
@@ -360,16 +428,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Print out all arguments
-    print("Initializing client with the following parameters:")
-    print(f"Config Path: {args.config_path}")
-    print(f"Experiment Length: {args.explen}")
-    print(f"Client ID: {args.clientid}")
-    print(f"Number of Keys: {args.num_keys}")
-    print(f"Number of Shards: {args.num_shards}")
-    print(f"Replica Config Paths: {args.replica_config_paths}")
-    print(f"Network Config Path: {args.net_config_path}")
-    print(f"Client Host: {args.client_host}")
-    print(f"Transport Protocol: {args.trans_protocol}")
+    # print("Initializing client with the following parameters:")
+    # print(f"Config Path: {args.config_path}")
+    # print(f"Experiment Length: {args.explen}")
+    # print(f"Client ID: {args.clientid}")
+    # print(f"Number of Keys: {args.num_keys}")
+    # print(f"Number of Shards: {args.num_shards}")
+    # print(f"Replica Config Paths: {args.replica_config_paths}")
+    # print(f"Network Config Path: {args.net_config_path}")
+    # print(f"Client Host: {args.client_host}")
+    # print(f"Transport Protocol: {args.trans_protocol}")
 
     try:
         # First, set environment variables from command line arguments
