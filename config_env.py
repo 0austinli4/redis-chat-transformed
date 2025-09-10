@@ -132,25 +132,25 @@ def resolve_config_paths(config, config_dir):
 def set_env_from_command_line_args(args):
     if args.clientid is not None:
         os.environ["IOCL_CLIENT_ID"] = str(args.clientid)
-        print(f"Set IOCL_CLIENT_ID = {args.clientid}")
+        # print(f"Set IOCL_CLIENT_ID = {args.clientid}")
     if args.num_keys is not None:
         os.environ["IOCL_CLIENT_NUM_KEYS"] = str(args.num_keys)
-        print(f"Set IOCL_CLIENT_NUM_KEYS = {args.num_keys}")
+        # print(f"Set IOCL_CLIENT_NUM_KEYS = {args.num_keys}")
     if args.num_shards is not None:
         os.environ["IOCL_NUM_SHARDS"] = str(args.num_shards)
-        print(f"Set IOCL_NUM_SHARDS = {args.num_shards}")
+        # print(f"Set IOCL_NUM_SHARDS = {args.num_shards}")
     if args.replica_config_paths is not None:
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = args.replica_config_paths
-        print(f"Set IOCL_REPLICA_CONFIG_PATHS = {args.replica_config_paths}")
+        # print(f"Set IOCL_REPLICA_CONFIG_PATHS = {args.replica_config_paths}")
     if args.net_config_path is not None:
         os.environ["IOCL_NET_CONFIG_PATH"] = args.net_config_path
-        print(f"Set IOCL_NET_CONFIG_PATH = {args.net_config_path}")
+        # print(f"Set IOCL_NET_CONFIG_PATH = {args.net_config_path}")
     if args.client_host is not None:
         os.environ["IOCL_CLIENT_HOST"] = args.client_host
-        print(f"Set IOCL_CLIENT_HOST = {args.client_host}")
+        # print(f"Set IOCL_CLIENT_HOST = {args.client_host}")
     if args.trans_protocol is not None:
         os.environ["IOCL_TRANSPORT_PROTOCOL"] = args.trans_protocol
-        print(f"Set IOCL_TRANSPORT_PROTOCOL = {args.trans_protocol}")
+        # print(f"Set IOCL_TRANSPORT_PROTOCOL = {args.trans_protocol}")
 
 
 def init_benchmark_with_config(config_path):

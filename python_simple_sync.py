@@ -4,7 +4,12 @@ import os.path
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
 import select
 import redisstore
-from redisstore import async_send_request, async_get_response, ValueType, start_transport
+from redisstore import (
+    async_send_request,
+    async_get_response,
+    ValueType,
+    start_transport,
+)
 
 
 def load_config_and_set_env(config_path):
@@ -219,15 +224,15 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     try:
         command_id = int(command_id)
     except ValueError:
-        print(f"Failed to convert command_id to int: {command_id}")
+        # print(f"Failed to convert command_id to int: {command_id}")
         raise RuntimeError("Invalid command_id returned by async_send_request")
-    
-    print(
-        f"Right before await async response: "
-        f"command_id={command_id}, session_id={session_id}"
-    )
+
+    # print(
+    #     f"Right before await async response: "
+    #     f"command_id={command_id}, session_id={session_id}"
+    # )
     # Call AwaitAsynchResponse to check for the result or get the efd
-    print("[PYTHON] Calling async_get_response")
+    # print("[PYTHON] Calling async_get_response")
     success, efd_or_result = async_get_response(session_id, command_id)
 
     if success:
@@ -238,7 +243,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         print(
             f"Request pending, need to block: session_id={session_id}, key={key}, efd_or_result={efd_or_result}"
         )
-    print("Converting the request asynch await response")
+    # print("Converting the request asynch await response")
 
     # Extract integer value from Value object if necessary
     if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
@@ -258,7 +263,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     # If efd_or_result is an event file descriptor, block on it
     efd = efd_or_result
     print(f"Blocking on eventfd for session_id={session_id}, key={key}, efd={efd}")
-    timeout = 20 # number of seconds of timeout  
+    timeout = 20  # number of seconds of timeout
     r, _, _ = select.select([efd], [], [], timeout)
     if not r:
         print(
@@ -286,14 +291,14 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
 
 def one_op_workload(session_id):
-    print("Calling sync, one op workload")
-    print("DEBUG: Performing simple put operation")
+    # print("Calling sync, one op workload")
+    # print("DEBUG: Performing simple put operation")
     for i in range(10):
         result = send_request_and_await(
             session_id, redisstore.Operation.PUT, 1, "value1", "oldvalue1"
         )
         print(result)
-    print("DEBUG: Completed PUT/GET iterations")
+    # print("DEBUG: Completed PUT/GET iterations")
 
 
 def random_op_workload(session_id, experiment_len=30):
@@ -320,45 +325,45 @@ def random_op_workload(session_id, experiment_len=30):
     ]
     start = time.time()
     while time.time() - start < experiment_len:
-        op = random.choice(op_types)
-        key = f"key{random.randint(1, 100)}"
+        key = random.randint(1, 100)  # Use integer key
         value = f"val{random.randint(1, 100)}"
         old_value = f"old{random.randint(1, 100)}"
+        op = random.choice(op_types)
         try:
             if op == redisstore.Operation.PUT:
-                result = redisstore.send_request(session_id, op, key, value)
+                result = send_request_and_await(session_id, op, key, value, "")
             elif op == redisstore.Operation.GET:
-                result = redisstore.send_request(session_id, op, key, "")
+                result = send_request_and_await(session_id, op, key, "", "")
             elif op == redisstore.Operation.INCR:
-                result = redisstore.send_request(session_id, op, key, "")
+                result = send_request_and_await(session_id, op, key, "", "")
             elif op == redisstore.Operation.SET:
-                result = redisstore.send_request(session_id, op, key, value)
+                result = send_request_and_await(session_id, op, key, value, "")
             elif op == redisstore.Operation.SADD:
-                result = redisstore.send_request(session_id, op, key, value)
+                result = send_request_and_await(session_id, op, key, value, "")
             elif op == redisstore.Operation.EXISTS:
-                result = redisstore.send_request(session_id, op, key, "")
+                result = send_request_and_await(session_id, op, key, "", "")
             elif op == redisstore.Operation.HMSET:
                 hash_val = '{"field1": "val1", "field2": "val2"}'
-                result = redisstore.send_request(session_id, op, key, hash_val)
+                result = send_request_and_await(session_id, op, key, hash_val, "")
             elif op == redisstore.Operation.HSET:
-                result = redisstore.send_request(session_id, op, key, value, old_value)
+                result = send_request_and_await(session_id, op, key, value, old_value)
             elif op == redisstore.Operation.HMGET:
-                result = redisstore.send_request(session_id, op, key, value)
+                result = send_request_and_await(session_id, op, key, value, "")
             elif op == redisstore.Operation.HGETALL:
-                result = redisstore.send_request(session_id, op, key, "")
+                result = send_request_and_await(session_id, op, key, "", "")
             elif op == redisstore.Operation.ZADD:
-                result = redisstore.send_request(session_id, op, key, value, old_value)
+                result = send_request_and_await(session_id, op, key, value, old_value)
             elif op == redisstore.Operation.ZINCRBY:
-                result = redisstore.send_request(session_id, op, key, value, old_value)
+                result = send_request_and_await(session_id, op, key, value, old_value)
             elif op == redisstore.Operation.ZSCORE:
-                result = redisstore.send_request(session_id, op, key, value)
+                result = send_request_and_await(session_id, op, key, value, "")
             elif (
                 op == redisstore.Operation.ZREVRANGE
                 or op == redisstore.Operation.ZRANGE
             ):
                 start_idx = str(random.randint(0, 10))
                 stop_idx = str(random.randint(11, 20))
-                result = redisstore.send_request(
+                result = send_request_and_await(
                     session_id, op, key, start_idx, stop_idx
                 )
             else:
@@ -366,8 +371,7 @@ def random_op_workload(session_id, experiment_len=30):
             print(f"{op.name}: {result}")
         except Exception as e:
             print(f"Error running {op.name}: {e}")
-        time.sleep(0.05) # small sleep
-
+        time.sleep(0.05)  # small sleep
 
 if __name__ == "__main__":
     import argparse
@@ -453,9 +457,9 @@ if __name__ == "__main__":
         import redisstore
 
         session_id = redisstore.custom_init_session()
-        print("GOT SESSION ID", session_id)
+        print("Session ID:", session_id)
         # redisstore.start_transport()
-        one_op_workload(session_id)
+        random_op_workload(session_id)
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")
         sys.exit(1)
