@@ -291,14 +291,20 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
 
 def one_op_workload(session_id):
-    # print("Calling sync, one op workload")
-    # print("DEBUG: Performing simple put operation")
+    print("Calling sync, one op workload")
+    print("DEBUG: Performing simple put operation")
     for i in range(10):
-        result = send_request_and_await(
-            session_id, redisstore.Operation.PUT, 1, "value1", "oldvalue1"
+        # PUT operation
+        put_result = send_request_and_await(
+            session_id, redisstore.Operation.PUT, i, "value1", "oldvalue1"
         )
-        print(result)
-    # print("DEBUG: Completed PUT/GET iterations")
+        print(f"PUT result: {put_result}")
+        # GET operation
+        get_result = send_request_and_await(
+            session_id, redisstore.Operation.GET, i, "", ""
+        )
+        print(f"GET result: {get_result}")
+    print("DEBUG: Completed PUT/GET iterations")
 
 
 def random_op_workload(session_id, experiment_len=30):
@@ -372,6 +378,7 @@ def random_op_workload(session_id, experiment_len=30):
         except Exception as e:
             print(f"Error running {op.name}: {e}")
         time.sleep(0.05)  # small sleep
+
 
 if __name__ == "__main__":
     import argparse
