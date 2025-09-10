@@ -196,7 +196,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     print(f"Sending request: session_id={session_id}, operation={operation}, key={key}")
 
     # Call the C++ AsyncSendRequest function
-    success, efd_or_result = async_send_request(
+    success, command_id = async_send_request(
         session_id, operation, key, new_val, old_val
     )
 
@@ -206,29 +206,29 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         )
         raise RuntimeError("AsyncSendRequest failed")
 
-    # Extract the integer value from efd_or_result if it is a Value object
-    if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
+    # Extract the integer value from command_id if it is a Value object
+    if hasattr(command_id, "type") and command_id.type == ValueType.STRING:
         try:
-            efd_or_result = int(efd_or_result.str)
-            print("POST conversion: result as Value object:", efd_or_result)
+            command_id = int(command_id.str)
+            print("POST conversion: result as Value object:", command_id)
         except ValueError:
-            print(f"Failed to convert Value.str to int: {efd_or_result.str}")
+            print(f"Failed to convert Value.str to int: {command_id.str}")
             raise RuntimeError("Invalid Value object returned by async_send_request")
 
-    # Ensure efd_or_result is an integer
+    # Ensure command_id is an integer
     try:
-        efd_or_result = int(efd_or_result)
+        command_id = int(command_id)
     except ValueError:
-        print(f"Failed to convert efd_or_result to int: {efd_or_result}")
-        raise RuntimeError("Invalid efd_or_result returned by async_send_request")
+        print(f"Failed to convert command_id to int: {command_id}")
+        raise RuntimeError("Invalid command_id returned by async_send_request")
     
     print(
         f"Right before await async response: "
-        f"efd_or_result={efd_or_result}, session_id={session_id}"
+        f"command_id={command_id}, session_id={session_id}"
     )
     # Call AwaitAsynchResponse to check for the result or get the efd
     print("[PYTHON] Calling async_get_response")
-    success, efd_or_result = async_get_response(session_id, efd_or_result)
+    success, efd_or_result = async_get_response(session_id, command_id)
 
     if success:
         # If the result is directly returned, no need to block
@@ -274,7 +274,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         os.close(efd)
 
         # call async get response again to get actual value
-        success, result = async_get_response(session_id)
+        success, result = async_get_response(session_id, command_id)
         if success:
             print(
                 f"Result received: session_id={session_id}, key={key}, result={result}"
@@ -454,7 +454,7 @@ if __name__ == "__main__":
 
         session_id = redisstore.custom_init_session()
         print("GOT SESSION ID", session_id)
-        redisstore.start_transport()
+        # redisstore.start_transport()
         one_op_workload(session_id)
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")
