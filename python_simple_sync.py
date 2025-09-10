@@ -10,7 +10,8 @@ from redisstore import (
     ValueType,
     start_transport,
 )
-
+import random
+import time
 
 def load_config_and_set_env(config_path):
     """Load JSON config and set environment variables for C++ binding"""
@@ -198,7 +199,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     Raises:
         RuntimeError: If AsyncSendRequest fails.
     """
-    print(f"Sending request: session_id={session_id}, operation={operation}, key={key}")
+    # print(f"Sending request: session_id={session_id}, operation={operation}, key={key}")
 
     # Call the C++ AsyncSendRequest function
     success, command_id = async_send_request(
@@ -215,9 +216,9 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     if hasattr(command_id, "type") and command_id.type == ValueType.STRING:
         try:
             command_id = int(command_id.str)
-            print("POST conversion: result as Value object:", command_id)
+            # print("POST conversion: result as Value object:", command_id)
         except ValueError:
-            print(f"Failed to convert Value.str to int: {command_id.str}")
+            # print(f"Failed to convert Value.str to int: {command_id.str}")
             raise RuntimeError("Invalid Value object returned by async_send_request")
 
     # Ensure command_id is an integer
@@ -235,14 +236,14 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     # print("[PYTHON] Calling async_get_response")
     success, efd_or_result = async_get_response(session_id, command_id)
 
-    if success:
-        # If the result is directly returned, no need to block
-        print(f"Request succeeded: session_id={session_id}, key={key}")
-        return success, efd_or_result
-    else:
-        print(
-            f"Request pending, need to block: session_id={session_id}, key={key}, efd_or_result={efd_or_result}"
-        )
+    # if success:
+    #     # If the result is directly returned, no need to block
+    #     # print(f"Request succeeded: session_id={session_id}, key={key}")
+    #     return success, efd_or_result
+    # else:
+    #     print(
+    #         f"Request pending, need to block: session_id={session_id}, key={key}, efd_or_result={efd_or_result}"
+    #     )
     # print("Converting the request asynch await response")
 
     # Extract integer value from Value object if necessary
@@ -262,7 +263,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
     # If efd_or_result is an event file descriptor, block on it
     efd = efd_or_result
-    print(f"Blocking on eventfd for session_id={session_id}, key={key}, efd={efd}")
+    # print(f"Blocking on eventfd for session_id={session_id}, key={key}, efd={efd}")
     timeout = 20  # number of seconds of timeout
     r, _, _ = select.select([efd], [], [], timeout)
     if not r:
@@ -270,6 +271,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
             f"Timeout occurred while waiting for eventfd: session_id={session_id}, key={key}"
         )
         raise TimeoutError("AwaitAsynchResponse timed out")
+        sys.exit("AwaitAsynchResponse timed out")
 
     if r:
         # Drain the eventfd counter
@@ -290,7 +292,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
             raise RuntimeError("Failed to retrieve result after unblocking")
 
 
-def one_op_workload(session_id):
+def put_then_get_workload(session_id):
     print("Calling sync, one op workload")
     print("DEBUG: Performing simple put operation")
     for i in range(10):
@@ -306,17 +308,32 @@ def one_op_workload(session_id):
         print(f"GET result: {get_result}")
     print("DEBUG: Completed PUT/GET iterations")
 
+def one_op_workload(session_id):
+    print("Calling sync, one op workload")
+    print("DEBUG: Performing single ZINCBRY operation")
+    # Perform one SADD operation
+    for i in range(20):
+        # start_idx = str(random.randint(0, 10))
+        # stop_idx = str(random.randint(11, 20))
+        # result = send_request_and_await(
+        #     session_id, redisstore.Operation.ZRANGE, i, start_idx, stop_idx
+        # )
+        value = f"val{random.randint(1, 100)}"
+        old_value = f"old{random.randint(1, 100)}"
+        put_result = send_request_and_await(
+            session_id, redisstore.Operation.ZINCRBY, i, value, old_value
+        )
+        print(f"ZINCBRY result: {put_result}")
+    print("DEBUG: Completed ZINCBRY operation")
 
-def random_op_workload(session_id, experiment_len=30):
+
+def random_op_workload(session_id, experiment_len=120):
     """Run random redisstore operations for experiment_len seconds."""
-    import random
-    import time
 
     op_types = [
         redisstore.Operation.PUT,
         redisstore.Operation.GET,
         redisstore.Operation.INCR,
-        redisstore.Operation.SET,
         redisstore.Operation.SADD,
         redisstore.Operation.EXISTS,
         redisstore.Operation.HMSET,
@@ -374,7 +391,7 @@ def random_op_workload(session_id, experiment_len=30):
                 )
             else:
                 result = None
-            print(f"{op.name}: {result}")
+            print(f"Result {op.name}: {result}")
         except Exception as e:
             print(f"Error running {op.name}: {e}")
         time.sleep(0.05)  # small sleep
