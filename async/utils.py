@@ -1,54 +1,39 @@
 import asyncio
 import json
-import math
 import random
 import sys
-import bcrypt
-from chat import demo_data, workload
+import redisstore
+from chat import workload
 from chat.config import get_config
+from sync.redis_sync_utils import send_request_and_await
+
 SESSION_ID = None
 SERVER_ID = random.uniform(0, 322321)
 redis_client = get_config().redis_client
-from redisstore import AsyncSendRequest, AsyncGetResponse
 
 
 def make_username_key(username):
     return f"username:{username}"
 
 
-def create_user(username, password):
-    pending_awaits = {*()}
+def create_user(session_id, username, password):
     username_key = make_username_key(username)
     hashed_password = bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt(10))
 
     # Convert bytes to string for storage
     hashed_password_str = hashed_password.decode("utf-8")
 
-    future_0 = AsyncSendRequest(SESSION_ID, "INCR", "total_users")
-
-    pending_awaits.add(future_0)
-
-    next_id = AsyncGetResponse(SESSION_ID, future_0)
-
-    pending_awaits.remove(future_0)
+    next_id = send_request_and_await(SESSION_ID, "INCR", "total_users", None, None)
 
     user_key = f"user:{next_id}"
 
-    future_1 = AsyncSendRequest(SESSION_ID, "SET", username_key, user_key)
-    pending_awaits.add(future_1)
-
-    future_2 = AsyncSendRequest(
-        SESSION_ID, "HMSET", user_key, {"username": username, "password": hashed_password_str}
+    send_request_and_await(SESSION_ID, "SET", username_key, user_key, None)
+    send_request_and_await(
+        SESSION_ID, "HMSET", user_key, {"username": username, "password": hashed_password_str}, None
     )
-    pending_awaits.add(future_2)
+    send_request_and_await(SESSION_ID, "SADD", f"user:{next_id}:rooms", "0", None)
 
-    future_3 = AsyncSendRequest(SESSION_ID, "SADD", f"user:{next_id}:rooms", "0")
-    pending_awaits.add(future_3)
-
-    for future in pending_awaits:
-        AsyncGetResponse(SESSION_ID, future)
-
-    return (pending_awaits, {"id": next_id, "username": username})
+    return {"id": next_id, "username": username}
 
 
 def get_messages(room_id=0, offset=0, size=50):
