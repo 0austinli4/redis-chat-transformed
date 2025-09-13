@@ -275,10 +275,13 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
     if r:
         # Drain the eventfd counter
-        os.read(efd, 8)
-
-        # Close the event file descriptor
-        os.close(efd)
+        try:
+            # Drain the eventfd counter
+            os.read(efd, 8)
+        finally:
+            # Always close the event file descriptor
+            os.close(efd)
+            print(f"Closed eventfd {efd} for session_id={session_id}, key={key}")
 
         # call async get response again to get actual value
         success, result = async_get_response(session_id, command_id)
