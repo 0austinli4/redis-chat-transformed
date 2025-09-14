@@ -1,11 +1,28 @@
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
 import redisstore
-from sync import utils_app_sync
-
+import sync.workload_app_sync as workload_app_sync
 
 def run_app_sync(session_id, client_id, client_type, explen):
     # Initialize database and demo data
-    utils_app_sync.init_redis(session_id, explen)
+    print("using paxos client utils!!", file=sys.stderr)
+    if int(clientid) == 0:
+        total_users_exist = send_request_and_await(SESSION_ID, "EXISTS", "total_users", "")
+        if total_users_exist == "0":
+            send_request_and_await(SESSION_ID, "SET", "total_users", "0", "")
+            send_request_and_await(SESSION_ID, "SET", f"room:0:name", "General", "")
+    elif int(clientid) > 0:
+        while True:
+            total_users_exist = send_request_and_await(
+                SESSION_ID, "EXISTS", "total_users", "", ""
+            )
+            if total_users_exist != "0":
+                break
+    workload_app_sync.create(session_id, clientid, explen)
     return
 
 

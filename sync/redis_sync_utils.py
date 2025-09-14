@@ -1,6 +1,6 @@
 import select
 import os
-from redisstore import async_send_request, async_get_response, ValueType
+from redisstore import async_send_request, async_get_response, ValueType, Operation
 
 
 def send_request_and_await(session_id, operation, key, new_val, old_val):
@@ -8,8 +8,8 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     Sends a request to the C++ layer and blocks until the response is ready.
     Args:
         session_id (int): The session ID.
-        operation (int): The operation to perform.
-        key (int): The key for the operation.
+        operation (str or Operation): The operation to perform (string or enum).
+        key (int/str): The key for the operation.
         new_val (object): The new value for the operation.
         old_val (object): The old value for the operation.
     Returns:
@@ -17,8 +17,18 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     Raises:
         RuntimeError: If AsyncSendRequest fails.
     """
+    # If operation is a string, map to redisstore.Operation
+    if isinstance(operation, str):
+        op_str = operation.upper()
+        if hasattr(Operation, op_str):
+            operation_enum = getattr(Operation, op_str)
+        else:
+            raise ValueError(f"Unknown operation string: {operation}")
+    else:
+        operation_enum = operation
+
     success, command_id = async_send_request(
-        session_id, operation, key, new_val, old_val
+        session_id, operation_enum, key, new_val, old_val
     )
     if not success:
         raise RuntimeError("AsyncSendRequest failed")

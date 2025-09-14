@@ -1,10 +1,10 @@
 import asyncio
-from chat import utils_app_sync
 import math
 import numpy as np
 import json
 import random
 import time
+import sync.utils_app_sync as utils_app_sync
 
 try:
     import redisstore
