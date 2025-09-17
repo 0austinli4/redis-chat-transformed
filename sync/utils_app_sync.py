@@ -8,42 +8,42 @@ def make_username_key(username):
     return f"username:{username}"
 
 
-def create_user(username, password):
+def create_user(session_id, username, password):
     username_key = make_username_key(username)
     hashed_password = bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt(10))
-    next_id = send_request_and_await(SESSION_ID, "INCR", "total_users", "", "")
+    next_id = send_request_and_await(session_id, "INCR", "total_users", None, None)
     user_key = f"user:{next_id}"
 
     hashed_password_str = hashed_password.decode("utf-8")
 
-    send_request_and_await(SESSION_ID, "SET", username_key, user_key, "")
+    send_request_and_await(session_id, "SET", username_key, user_key,None)
     send_request_and_await(
-        SESSION_ID,
+        session_id,
         "HMSET",
         user_key,
         {"username": username, "password": hashed_password_str},
         ""
     )
-    send_request_and_await(SESSION_ID, "SADD", f"user:{next_id}:rooms", "0", "")
+    send_request_and_await(session_id, "SADD", f"user:{next_id}:rooms", "0")
     return {"id": next_id, "username": username}
 
 
-def get_messages(room_id=0, offset=0, size=50):
+def get_messages(session_id, room_id=0, offset=0, size=10):
     """Check if room with id exists; fetch messages limited by size"""
     room_key = f"room:{room_id}"
-    room_exists = send_request_and_await(SESSION_ID, "EXISTS", room_key, "", "")
+    room_exists = send_request_and_await(session_id, "EXISTS", room_key, None, None)
     if not room_exists:
         return []
     else:
         values = send_request_and_await(
-            SESSION_ID, "ZREVRANGE", room_key, offset, offset + size
+            session_id, "ZREVRANGE", room_key, offset, offset + size
         )
         return list(map(lambda x: json.loads(x.decode("utf-8")), values))
 
 
-def hmget(key, key2):
+def hmget(session_id, key, key2):
     """Wrapper around hmget to unpack bytes from hmget"""
-    result = send_request_and_await(SESSION_ID, "HMGET", key, key2, "")
+    result = send_request_and_await(session_id, "HMGET", key, key2, None)
     return list(result)
 
 
@@ -55,23 +55,23 @@ def get_private_room_id(user1, user2):
     return f"{min_user_id}:{max_user_id}"
 
 
-def create_private_room(user1, user2):
+def create_private_room(session_id, user1, user2):
     """Create a private room and add users to it"""
     room_id = get_private_room_id(user1, user2)
     if not room_id:
         raise RuntimeError("ROOM ID DID NOT RETURN")
         return (None, True)
-    send_request_and_await(SESSION_ID, "SADD", f"user:{user1}:rooms", room_id, "")
-    send_request_and_await(SESSION_ID, "SADD", f"user:{user2}:rooms", room_id, "")
-    user1 = hmget(f"user:{user1}", "username")
-    user2 = hmget(f"user:{user2}", "username")
+    send_request_and_await(session_id, "SADD", f"user:{user1}:rooms", room_id, None)
+    send_request_and_await(session_id, "SADD", f"user:{user2}:rooms", room_id, None)
+    user1 = hmget(session_id, f"user:{user1}", "username")
+    user2 = hmget(session_id, f"user:{user2}", "username")
     return ({"id": room_id, "names": [user1, user2]}, False)
 
 
-def event_stream():
+def event_stream(session_id):
     """Handle message formatting, etc."""
-    send_request_and_await(SESSION_ID, "SUBSCRIBE", "MESSAGES", "", "")
-    messages = send_request_and_await(SESSION_ID, "LISTEN", "", "", "")
+    send_request_and_await(session_id, "SUBSCRIBE", "MESSAGES", None, None)
+    messages = send_request_and_await(session_id, "LISTEN", 0, None, None)
     for message in messages:
         data = f"data: {str(message)}\n\n"
         yield data

@@ -6,23 +6,26 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config_env import set_env_from_command_line_args, init_benchmark_with_config
 import redisstore
 import sync.workload_app_sync as workload_app_sync
+from sync.redis_sync_utils import send_request_and_await
 
 def run_app_sync(session_id, client_id, client_type, explen):
     # Initialize database and demo data
     print("using paxos client utils!!", file=sys.stderr)
-    if int(clientid) == 0:
-        total_users_exist = send_request_and_await(SESSION_ID, "EXISTS", "total_users", "")
-        if total_users_exist == "0":
-            send_request_and_await(SESSION_ID, "SET", "total_users", "0", "")
-            send_request_and_await(SESSION_ID, "SET", f"room:0:name", "General", "")
-    elif int(clientid) > 0:
-        while True:
-            total_users_exist = send_request_and_await(
-                SESSION_ID, "EXISTS", "total_users", "", ""
-            )
-            if total_users_exist != "0":
-                break
-    workload_app_sync.create(session_id, clientid, explen)
+    # if int(client_id) == 0:
+    #     total_users_exist = send_request_and_await(session_id, "EXISTS", "total_users", "", "")
+    #     if total_users_exist == "0":
+    #         send_request_and_await(session_id, "SET", "total_users", "0", "")
+    #         send_request_and_await(session_id, "SET", f"room:0:name", "General", "")
+    # elif int(client_id) > 0:
+    #     while True:
+    #         print("STILL CHECKING TRUE CLIENT ID")
+    #         total_users_exist = send_request_and_await(
+    #             session_id, "EXISTS", "total_users", "", ""
+    #         )
+    #         if total_users_exist != "0":
+    #             break
+    print("finishing workload")
+    workload_app_sync.create(session_id, client_id, explen)
     return
 
 
@@ -43,7 +46,7 @@ if __name__ == "__main__":
         "--explen",
         action="store",
         dest="explen",
-        default=30,
+        default=20,
         help="Experiment length override",
     )
     parser.add_argument("--warmup_secs", type=int, default=0, help="Warmup seconds")

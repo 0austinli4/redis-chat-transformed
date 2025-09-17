@@ -1,6 +1,21 @@
 import select
 import os
-from redisstore import async_send_request, async_get_response, ValueType, Operation
+import hashlib
+from redisstore import (
+    async_send_request,
+    async_get_response,
+    ValueType,
+    Operation,
+    Value,
+)
+
+
+def _hash_key_to_int(key):
+    if isinstance(key, str):
+        # Use md5 for deterministic hash, take first 8 bytes as integer
+        h = hashlib.md5(key.encode("utf-8")).digest()
+        return int.from_bytes(h[:8], "big")
+    return key
 
 
 def send_request_and_await(session_id, operation, key, new_val, old_val):
@@ -27,8 +42,12 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     else:
         operation_enum = operation
 
+    key_int = _hash_key_to_int(key)
+
+    print("send request and await", session_id, operation, key, new_val, old_val)
+    print("var types send request and await", type(session_id), type(operation_enum), type(key_int), type(new_val), type(old_val))
     success, command_id = async_send_request(
-        session_id, operation_enum, key, new_val, old_val
+        session_id, operation_enum, key_int, new_val, old_val
     )
     if not success:
         raise RuntimeError("AsyncSendRequest failed")
@@ -62,6 +81,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         finally:
             os.close(efd)
         success, result = async_get_response(session_id, command_id)
+        print("Received RESULT OF SEND REQUEST AWAIT", success, result)
         if success:
             return success, result
         else:
