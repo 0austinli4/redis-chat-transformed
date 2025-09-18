@@ -12,6 +12,11 @@ def create_user(session_id, username, password):
     username_key = make_username_key(username)
     hashed_password = bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt(10))
     next_id = send_request_and_await(session_id, "INCR", "total_users", None, None)
+    # Debug: log next_id and its type
+    try:
+        print(f"[DEBUG] create_user next_id={next_id} type={type(next_id)}", file=sys.stderr)
+    except Exception:
+        pass
     user_key = f"user:{next_id}"
 
     hashed_password_str = hashed_password.decode("utf-8")
@@ -32,13 +37,32 @@ def get_messages(session_id, room_id=0, offset=0, size=10):
     """Check if room with id exists; fetch messages limited by size"""
     room_key = f"room:{room_id}"
     room_exists = send_request_and_await(session_id, "EXISTS", room_key, None, None)
+    # room_exists may be tuple or bool-like depending on bridge; normalize
+    if isinstance(room_exists, tuple) and len(room_exists) == 2:
+        room_exists = room_exists[1]
     if not room_exists:
         return []
     else:
         values = send_request_and_await(
             session_id, "ZREVRANGE", room_key, offset, offset + size
         )
-        return list(map(lambda x: json.loads(x.decode("utf-8")), values))
+        # Debug: log raw values
+        try:
+            print(f"[DEBUG] get_messages raw values type={type(values)} len={getattr(values, '__len__', lambda: 'NA')()}", file=sys.stderr)
+        except Exception:
+            pass
+        # Normalize tuple return (success, result)
+        if isinstance(values, tuple) and len(values) == 2:
+            values = values[1]
+        # Values could already be strings (from C++), so guard .decode
+        def to_json(s):
+            if isinstance(s, bytes):
+                try:
+                    s = s.decode("utf-8")
+                except Exception:
+                    s = s.decode("utf-8", errors="ignore")
+            return json.loads(s)
+        return list(map(to_json, values))
 
 
 def hmget(session_id, key, key2):

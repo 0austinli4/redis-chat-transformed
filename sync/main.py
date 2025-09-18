@@ -24,7 +24,6 @@ def run_app_sync(session_id, client_id, client_type, explen):
     #         )
     #         if total_users_exist != "0":
     #             break
-    print("finishing workload")
     workload_app_sync.create(session_id, client_id, explen)
     return
 
@@ -46,7 +45,7 @@ if __name__ == "__main__":
         "--explen",
         action="store",
         dest="explen",
-        default=20,
+        default=30,
         help="Experiment length override",
     )
     parser.add_argument("--warmup_secs", type=int, default=0, help="Warmup seconds")

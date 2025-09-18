@@ -44,8 +44,8 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
 
     key_int = _hash_key_to_int(key)
 
-    print("send request and await", session_id, operation, key, new_val, old_val)
-    print("var types send request and await", type(session_id), type(operation_enum), type(key_int), type(new_val), type(old_val))
+    # print("send request and await", session_id, operation, key, new_val, old_val)
+    # print("var types send request and await", type(session_id), type(operation_enum), type(key_int), type(new_val), type(old_val))
     success, command_id = async_send_request(
         session_id, operation_enum, key_int, new_val, old_val
     )
@@ -81,7 +81,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         finally:
             os.close(efd)
         success, result = async_get_response(session_id, command_id)
-        print("Received RESULT OF SEND REQUEST AWAIT", success, result)
+        # print("Received RESULT OF SEND REQUEST AWAIT", success, result)
         if success:
             return success, result
         else:
