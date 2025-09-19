@@ -114,7 +114,7 @@ def create_private_room(session_id, user1, user2):
 def event_stream(session_id):
     pending_awaits = {*()}
     "Handle message formatting, etc."
-    future_0 = send_request(session_id "SUBSCRIBE", "MESSAGES")
+    future_0 = send_request(session_id, "SUBSCRIBE", "MESSAGES")
     pending_awaits.add(future_0)
     future_1 = send_request(session_id, "LISTEN")
     pending_awaits.add(future_1)
