@@ -33,7 +33,7 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 
-def add_message(sesion_id, room_id, from_id, content, timestamp):
+def add_message(session_id, room_id, from_id, content, timestamp):
     pending_awaits = {*()}
     room_key = f"room:{room_id}"
     message = {
@@ -43,7 +43,7 @@ def add_message(sesion_id, room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
 
-    future_0 = send_request("ZADD", room_key, {json.dumps(message): int(message["date"])})
+    future_0 = send_request(session_id, "ZADD", room_key, {json.dumps(message): int(message["date"])})
     pending_awaits.add(future_0)
     for future in pending_awaits:
         await_request(future)
