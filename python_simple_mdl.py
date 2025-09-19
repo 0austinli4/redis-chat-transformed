@@ -98,7 +98,7 @@ def create(client_type):
     t_end = time.time() + 60 * num_minutes
 
     while time.time() < t_end:
-        before = time.time_ns()
+        before = int(time.time() * 1e9)
         optype = "test"
         if client_type == "mdl":
             optype = "mdl"
@@ -106,7 +106,7 @@ def create(client_type):
         else:
             optype = "multi_paxos"
             add_message_sync()
-        after = time.time_ns()
+        after = int(time.time() * 1e9)
         lat = after - before
         print(f"app,{lat}")
         print(f"{optype},{lat}")

@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from iocl.iocl_utils import send_request, await_request
+import utils
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
 greetings = ["Hello", "Hi", "Yo", "Hola"]
@@ -58,7 +59,7 @@ def create(session_id, client_id, explen):
     selector = 0
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
-        before = time.time_ns()
+        before = int(time.time() * 1e9)
 
         if app_request_type < 2:
             selector = 0
@@ -82,7 +83,7 @@ def create(session_id, client_id, explen):
             room_id = np.random.uniform(0, 1e9)
             utils.get_messages(session_id, room_id)
 
-        after = time.time_ns()
+        after = int(time.time() * 1e9)
         if rampUp <= int(time.time()) and int(time.time()) < (t_end-rampDown):
             lat = after - before
             optype = api[selector]

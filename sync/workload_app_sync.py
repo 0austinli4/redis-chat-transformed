@@ -1,12 +1,12 @@
 import asyncio
 import sync.utils_app_sync as utils
-import iocl.utils as redis_sync_utils
+import iocl.iocl_utils as redis_sync_utils
 import math
 import numpy as np
 import json
 import random
 import time
-
+import workload_app_sync
 try:
     import redisstore
 except ImportError:
