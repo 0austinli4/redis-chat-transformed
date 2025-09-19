@@ -1,6 +1,6 @@
 import asyncio
-import sync.utils_app_sync as utils_app_sync
-import sync.redis_sync_utils as redis_sync_utils
+import sync.utils_app_sync as utils
+import iocl.utils as redis_sync_utils
 import math
 import numpy as np
 import json
@@ -45,7 +45,7 @@ def add_message(session_id, room_id, from_id, content, timestamp):
     }
     message_json = json.dumps(message)
     # print("about to call add message")
-    redis_sync_utils.send_request_and_await(
+    utils.send_request_and_await(
         session_id, "PUT", room_key, message_json, ""
     )
 

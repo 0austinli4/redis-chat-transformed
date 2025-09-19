@@ -1,6 +1,6 @@
 import json
 import bcrypt
-from sync.redis_sync_utils import send_request_and_await
+from iocl.utils import send_request_and_await
 import sys
 
 

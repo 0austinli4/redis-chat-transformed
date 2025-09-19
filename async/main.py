@@ -1,31 +1,45 @@
-import sys
-import os
+from chat.app import app, run_app  # n
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import argparse
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
-import redisstore
+from iocl.iocl_utils import send_request, await_request
+from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
+
+import sys
+import os
 import sync.workload_app_sync as workload_app_sync
-from iocl.utils import send_request_and_await
+
 
 def run_app(session_id, client_id, client_type, explen):
-    # Initialize database and demo data
-    print("using paxos client utils!!", file=sys.stderr)
+    print("in MDL python", file=sys.stderr)
+
+    pending_awaits = {*()}
     if int(client_id) == 0:
-        total_users_exist = send_request_and_await(session_id, "EXISTS", "total_users", "", "")
+        future_0 = send_request(session_id, "EXISTS", "total_users")
+        pending_awaits.add(future_0)
+        total_users_exist = await_request(session_id, future_0)
+        pending_awaits.remove(future_0)
         if total_users_exist == "0":
-            send_request_and_await(session_id, "SET", "total_users", "0", "")
-            send_request_and_await(session_id, "SET", f"room:0:name", "General", "")
+            future_1 = send_request(session_id, "SET", "total_users", 0)
+            pending_awaits.add(future_1)
+            future_2 = send_request(session_id, "SET", f"room:0:name", "General")
+            pending_awaits.add(future_2)
+            await_request(session_id, future_1)
+            await_request(session_id, future_2)
+            pending_awaits.remove(future_1)
+            pending_awaits.remove(future_2)
     elif int(client_id) > 0:
         while True:
-            print("STILL CHECKING TRUE CLIENT ID")
-            total_users_exist = send_request_and_await(
-                session_id, "EXISTS", "total_users", "", ""
-            )
+            future_0 = send_request(session_id, "EXISTS", "total_users")
+            pending_awaits.add(future_0)
+            total_users_exist = await_request(session_id, future_0)
+            pending_awaits.remove(future_0)
             if total_users_exist != "0":
                 break
     workload_app_sync.create(session_id, client_id, explen)
-    return
+
 
 
 if __name__ == "__main__":
