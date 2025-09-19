@@ -86,7 +86,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         else:
             raise RuntimeError("Failed to retrieve result after unblocking")
 
-def send_request(session_id, operation, key, new_val, old_val):
+def send_request(session_id, operation, key, new_val="", old_val=""):
     """
     Sends a request to the C++ layer and blocks until the response is ready.
     Args:
