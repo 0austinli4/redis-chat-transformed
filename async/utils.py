@@ -51,6 +51,11 @@ def get_messages(session_id, room_id=0, offset=0, size=50):
     pending_awaits.add(future_0)
     room_exists = await_request(session_id, future_0)
     pending_awaits.remove(future_0)
+    
+    # Normalize tuple return (success, result)
+    if isinstance(room_exists, tuple) and len(room_exists) == 2:
+        room_exists = room_exists[1]
+    
     if not room_exists:
         for future in pending_awaits:
             await_request(session_id, future)
@@ -61,15 +66,28 @@ def get_messages(session_id, room_id=0, offset=0, size=50):
         values = await_request(session_id, future_1)
         pending_awaits.remove(future_1)
 
+        # Normalize tuple return (success, result)
+        if isinstance(values, tuple) and len(values) == 2:
+            values = values[1]
+        
+        # Values could already be strings (from C++), so guard .decode
+        def to_json(s):
+            if isinstance(s, bytes):
+                try:
+                    s = s.decode("utf-8")
+                except Exception:
+                    s = s.decode("utf-8", errors="ignore")
+            return json.loads(s)
+
         for future in pending_awaits:
             await_request(session_id, future)
         return (
             pending_awaits,
-            list(map(lambda x: json.loads(x.decode("utf-8")), values)),
+            list(map(to_json, values)),
         )
 
     for future in pending_awaits:
-        AsyncGetResponse(SESSION_ID, future)
+        await_request(session_id, future)
     return (pending_awaits, None)
 
 
