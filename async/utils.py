@@ -78,7 +78,7 @@ def hmget(session_id, key, key2):
     "Wrapper around hmget to unpack bytes from hmget"
     future_0 = send_request(session_id, "HMGET", key, key2)
     pending_awaits.add(future_0)
-    result = send_request(session_id, future_0)
+    result = await_request(session_id, future_0)
     pending_awaits.remove(future_0)
     return (pending_awaits, list(map(lambda x: x.decode("utf-8"), result)))
 
