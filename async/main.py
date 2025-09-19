@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
 from iocl.iocl_utils import send_request, await_request
-
+import redisstore
 
 def run_app(session_id, client_id, client_type, explen):
     print("in MDL python", file=sys.stderr)
@@ -48,7 +48,8 @@ if __name__ == "__main__":
         "--config",
         action="store",
         dest="config_path",
-        default="/users/akalaba/IOCL/experiments/configs/1shard_transformed_test.json",
+        default="/users/akalaba/IOCL/experiments/configs/1shard_transformed_test_wisc.json",
+        # default="/users/akalaba/IOCL/experiments/configs/1shard_transformed_test.json",
         help="Path to the JSON configuration file",
     )
     parser.add_argument(
