@@ -1,14 +1,12 @@
-from chat.app import app, run_app  # n
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import argparse
-from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
-from iocl.iocl_utils import send_request, await_request
 
 import sys
 import os
 import workload_app_async
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import argparse
+from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
+from iocl.iocl_utils import send_request, await_request
+
 
 def run_app(session_id, client_id, client_type, explen):
     print("in MDL python", file=sys.stderr)

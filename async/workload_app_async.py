@@ -1,10 +1,15 @@
 import asyncio
-from chat import utils
 import math
 import numpy as np
 import json
 import random
 import time
+import sys
+import os
+
+# Add the parent directory to Python path to find iocl module
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from iocl.iocl_utils import send_request, await_request
 
 demo_users = ["Pablo", "Joe", "Mary", "Alex"]
