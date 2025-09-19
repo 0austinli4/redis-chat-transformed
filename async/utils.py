@@ -56,7 +56,7 @@ def get_messages(session_id, room_id=0, offset=0, size=50):
             await_request(session_id, future)
         return (pending_awaits, [])
     else:
-        future_1 = await_request(session_id, "ZREVRANGE", room_key, offset, offset + size)
+        future_1 = send_request(session_id, "ZREVRANGE", room_key, offset, offset + size)
         pending_awaits.add(future_1)
         values = await_request(session_id, future_1)
         pending_awaits.remove(future_1)
