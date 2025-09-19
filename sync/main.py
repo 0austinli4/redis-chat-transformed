@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
 import redisstore
 import sync.workload_app_sync as workload_app_sync
-from iocl.utils import send_request_and_await
+from iocl.iocl_utils import send_request_and_await
 
 def run_app(session_id, client_id, client_type, explen):
     # Initialize database and demo data
