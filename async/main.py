@@ -5,12 +5,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import argparse
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
 from iocl.iocl_utils import send_request, await_request
-from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
 
 import sys
 import os
-import sync.workload_app_sync as workload_app_sync
-
+import workload_app_async
 
 def run_app(session_id, client_id, client_type, explen):
     print("in MDL python", file=sys.stderr)
@@ -38,7 +36,7 @@ def run_app(session_id, client_id, client_type, explen):
             pending_awaits.remove(future_0)
             if total_users_exist != "0":
                 break
-    workload_app_sync.create(session_id, client_id, explen)
+    workload_app_async.create(session_id, client_id, explen)
 
 
 
