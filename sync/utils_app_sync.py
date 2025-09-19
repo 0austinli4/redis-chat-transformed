@@ -29,7 +29,7 @@ def create_user(session_id, username, password):
         {"username": username, "password": hashed_password_str},
         ""
     )
-    send_request_and_await(session_id, "SADD", f"user:{next_id}:rooms", "0")
+    send_request_and_await(session_id, "SADD", f"user:{next_id}:rooms", "0", None)
     return {"id": next_id, "username": username}
 
 
@@ -62,7 +62,7 @@ def get_messages(session_id, room_id=0, offset=0, size=10):
                 except Exception:
                     s = s.decode("utf-8", errors="ignore")
             return json.loads(s)
-        return list(map(to_json, values))
+        return values
 
 
 def hmget(session_id, key, key2):

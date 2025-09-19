@@ -90,9 +90,9 @@ def create_private_room(user1, user2):
     if not room_id:
         raise RuntimeError("ROOM ID DID NOT RETURN")
         return (pending_awaits, (None, True))
-    future_0 = AsyncSendRequest(SESSION_ID, "SADD", f"user:{user1}:rooms", room_id)
+    future_0 = AsyncSendRequest(SESSION_ID, "SADD", f"user:{user1}:rooms", room_id, "")
     pending_awaits.add(future_0)
-    future_1 = AsyncSendRequest(SESSION_ID, "SADD", f"user:{user2}:rooms", room_id)
+    future_1 = AsyncSendRequest(SESSION_ID, "SADD", f"user:{user2}:rooms", room_id, "")
     pending_awaits.add(future_1)
     pending_awaits_hmget, user1 = hmget(f"user:{user1}", "username")
     pending_awaits.update(pending_awaits_hmget)

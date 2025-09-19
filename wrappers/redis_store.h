@@ -67,6 +67,7 @@ enum class Operation {
     ZADD,
     ZINCRBY,
     ZSCORE,
+    ZRANGE,
     ZREVRANGE
 };
 
