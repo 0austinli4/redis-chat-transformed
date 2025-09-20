@@ -7,6 +7,7 @@ from redisstore import (
     ValueType,
     Operation,
     Value,
+    value_to_python,
 )
 
 
@@ -16,6 +17,47 @@ def _hash_key_to_int(key):
         h = hashlib.md5(key.encode("utf-8")).digest()
         return int.from_bytes(h[:8], "big")
     return key
+
+
+def convert_value_to_python(value):
+    """
+    Convert a request_utils::Value object to a native Python object.
+    
+    Args:
+        value (Value): The Value object to convert.
+        
+    Returns:
+        object: The converted Python object (str, list, set, dict, or None).
+    """
+    return value_to_python(value)
+
+
+def extract_value_by_type(value):
+    """
+    Extract a value from a Value object based on its type, handling both Value objects and regular Python objects.
+    
+    Args:
+        value: Either a Value object or a regular Python object.
+        
+    Returns:
+        object: The extracted value in the appropriate Python type.
+        
+    Raises:
+        ValueError: If the value type is not supported.
+    """
+    if not hasattr(value, "type"):
+        return value
+    
+    if value.type == ValueType.STRING:
+        return value.str
+    elif value.type == ValueType.LIST:
+        return value.list
+    elif value.type == ValueType.SET:
+        return value.set
+    elif value.type == ValueType.HASH:
+        return value.hash
+    else:
+        return None
 
 def send_request_and_await(session_id, operation, key, new_val, old_val):
     """
@@ -40,7 +82,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
             raise ValueError(f"Unknown operation string: {operation}")
     else:
         operation_enum = operation
-
+ 
     key_int = _hash_key_to_int(key)
 
     # print("send request and await", session_id, operation, key, new_val, old_val)
@@ -82,7 +124,9 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         success, result = async_get_response(session_id, command_id)
         # print("Received RESULT OF SEND REQUEST AWAIT", success, result)
         if success:
-            return success, result
+            # Convert Value object to native Python object
+            python_result = extract_value_by_type(result)
+            return success, python_result
         else:
             raise RuntimeError("Failed to retrieve result after unblocking")
 
@@ -131,6 +175,8 @@ def send_request(session_id, operation, key, new_val="", old_val=""):
 def await_request(session_id, command_id):
     success, efd_or_result = async_get_response(session_id, command_id)
     if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
+        if efd_or_result.str == "OK":
+            return success, efd_or_result.str
         try:
             efd_or_result = int(efd_or_result.str)
         except ValueError:
@@ -152,6 +198,8 @@ def await_request(session_id, command_id):
         success, result = async_get_response(session_id, command_id)
         # print("Received RESULT OF SEND REQUEST AWAIT", success, result)
         if success:
-            return success, result
+            # Convert Value object to native Python object
+            python_result = extract_value_by_type(result)
+            return success, python_result
         else:
             raise RuntimeError("Failed to retrieve result after unblocking")

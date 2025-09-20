@@ -51,17 +51,7 @@ def get_messages(session_id, room_id=0, offset=0, size=10):
             print(f"[DEBUG] get_messages raw values type={type(values)} len={getattr(values, '__len__', lambda: 'NA')()}", file=sys.stderr)
         except Exception:
             pass
-        # Normalize tuple return (success, result)
-        if isinstance(values, tuple) and len(values) == 2:
-            values = values[1]
-        # Values could already be strings (from C++), so guard .decode
-        def to_json(s):
-            if isinstance(s, bytes):
-                try:
-                    s = s.decode("utf-8")
-                except Exception:
-                    s = s.decode("utf-8", errors="ignore")
-            return json.loads(s)
+            
         return values
 
 

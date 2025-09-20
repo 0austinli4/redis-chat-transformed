@@ -66,24 +66,11 @@ def get_messages(session_id, room_id=0, offset=0, size=50):
         values = await_request(session_id, future_1)
         pending_awaits.remove(future_1)
 
-        # Normalize tuple return (success, result)
-        if isinstance(values, tuple) and len(values) == 2:
-            values = values[1]
-        
-        # Values could already be strings (from C++), so guard .decode
-        def to_json(s):
-            if isinstance(s, bytes):
-                try:
-                    s = s.decode("utf-8")
-                except Exception:
-                    s = s.decode("utf-8", errors="ignore")
-            return json.loads(s)
-
         for future in pending_awaits:
             await_request(session_id, future)
         return (
             pending_awaits,
-            list(map(to_json, values)),
+            list((values)),
         )
 
     for future in pending_awaits:
@@ -98,10 +85,10 @@ def hmget(session_id, key, key2):
     pending_awaits.add(future_0)
     result = await_request(session_id, future_0)
     pending_awaits.remove(future_0)
-    return (pending_awaits, list(map(lambda x: x.decode("utf-8"), result)))
+    return (pending_awaits, list(result))
 
 
-def get_private_room_id(sesion_id, user1, user2):
+def get_private_room_id(user1, user2):
     if user1 == user2:
         return None
     min_user_id = user2 if user1 > user2 else user1
@@ -120,9 +107,9 @@ def create_private_room(session_id, user1, user2):
     pending_awaits.add(future_0)
     future_1 = send_request(session_id, "SADD", f"user:{user2}:rooms", room_id, "")
     pending_awaits.add(future_1)
-    pending_awaits_hmget, user1 = hmget(f"user:{user1}", "username")
+    pending_awaits_hmget, user1 = hmget(session_id, f"user:{user1}", "username")
     pending_awaits.update(pending_awaits_hmget)
-    pending_awaits_hmget, user2 = hmget(f"user:{user2}", "username")
+    pending_awaits_hmget, user2 = hmget(session_id, f"user:{user2}", "username")
     pending_awaits.update(pending_awaits_hmget)
     for future in pending_awaits:
         await_request(session_id, future)

@@ -42,11 +42,11 @@ def add_message(session_id, room_id, from_id, content, timestamp):
         "message": content,
         "roomId": room_id,
     }
-
-    future_0 = send_request(session_id, "ZADD", room_key, {json.dumps(message): int(message["date"])})
+    message_json = json.dumps(message)
+    future_0 = send_request(session_id, "PUT", room_key, message_json)
     pending_awaits.add(future_0)
     for future in pending_awaits:
-        await_request(future)
+        await_request(session_id, future)
     return (pending_awaits, None)
 
 
