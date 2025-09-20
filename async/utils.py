@@ -104,12 +104,16 @@ def create_private_room(session_id, user1, user2):
         raise RuntimeError("ROOM ID DID NOT RETURN")
         return (pending_awaits, (None, True))
     future_0 = send_request(session_id, "SADD", f"user:{user1}:rooms", room_id, "")
+    print("future 0", future_0, file=sys.stderr)
     pending_awaits.add(future_0)
     future_1 = send_request(session_id, "SADD", f"user:{user2}:rooms", room_id, "")
+    print("future 1", future_1, file=sys.stderr)
     pending_awaits.add(future_1)
     pending_awaits_hmget, user1 = hmget(session_id, f"user:{user1}", "username")
+    print("pending awaits1", pending_awaits_hmget, file=sys.stderr)
     pending_awaits.update(pending_awaits_hmget)
     pending_awaits_hmget, user2 = hmget(session_id, f"user:{user2}", "username")
+    print("pending awaits2", pending_awaits_hmget, file=sys.stderr)
     pending_awaits.update(pending_awaits_hmget)
     for future in pending_awaits:
         await_request(session_id, future)
@@ -123,7 +127,7 @@ def event_stream(session_id):
     pending_awaits.add(future_0)
     future_1 = send_request(session_id, "LISTEN")
     pending_awaits.add(future_1)
-    messages = send_request(session_id, future_1)
+    messages = await_request(session_id, future_1)
     pending_awaits.remove(future_1)
     for message in messages:
         data = f"data: {str(message)}\n\n"
