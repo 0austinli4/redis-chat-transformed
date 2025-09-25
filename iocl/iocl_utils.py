@@ -9,7 +9,7 @@ from redisstore import (
     Value,
     value_to_python,
 )
-
+import sys
 
 def _hash_key_to_int(key):
     if isinstance(key, str):
@@ -172,34 +172,42 @@ def send_request(session_id, operation, key, new_val="", old_val=""):
         raise RuntimeError("Invalid command_id returned by async_send_request")
     return command_id
 
-def await_request(session_id, command_id):
-    success, efd_or_result = async_get_response(session_id, command_id)
-    if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
-        if efd_or_result.str == "OK":
-            return success, efd_or_result.str
-        try:
-            efd_or_result = int(efd_or_result.str)
-        except ValueError:
-            raise RuntimeError("Invalid Value object returned by async_get_response")
-    if not isinstance(efd_or_result, int) or efd_or_result < 0:
-        raise RuntimeError(
-            "Invalid event file descriptor returned by async_get_response"
-        )
-    efd = efd_or_result
-    timeout = 20
+def await_request(session_id, command_id, timeout=20):
+    print("Awaiting request", command_id)
+
+    success, resp = async_get_response(session_id, command_id)
+
+    # Response is ready
+    if success:
+        return success, extract_value_by_type(resp)
+
+    # Response is not ready yet -> resp.str contains efd as a string
+    try:
+        efd = int(resp.str)
+        print(f"Waiting on efd {efd} for command {command_id}")
+    except ValueError:
+        raise RuntimeError(f"Expected efd string, got {resp}")
+
+    # Wait for fd
+    import select, os, fcntl
+    try:
+        fcntl.fcntl(efd, fcntl.F_GETFD)  # validate fd
+    except OSError as e:
+        raise RuntimeError(f"EFD {efd} is invalid: {e}")
+
     r, _, _ = select.select([efd], [], [], timeout)
     if not r:
-        raise TimeoutError("AwaitAsynchResponse timed out")
-    if r:
-        try:
-            os.read(efd, 8)
-        finally:
-            os.close(efd)
-        success, result = async_get_response(session_id, command_id)
-        # print("Received RESULT OF SEND REQUEST AWAIT", success, result)
-        if success:
-            # Convert Value object to native Python object
-            python_result = extract_value_by_type(result)
-            return success, python_result
-        else:
-            raise RuntimeError("Failed to retrieve result after unblocking")
+        os.close(efd)
+        raise TimeoutError(f"Timeout waiting for command {command_id}")
+
+    try:
+        os.read(efd, 8)
+    finally:
+        os.close(efd)
+
+    # After unblocking, fetch the actual result
+    success, result = async_get_response(session_id, command_id)
+    if success:
+        return success, extract_value_by_type(result)
+    else:
+        raise RuntimeError(f"Failed to retrieve result after unblocking for command {command_id}")
