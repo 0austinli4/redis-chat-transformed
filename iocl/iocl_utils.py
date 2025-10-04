@@ -59,11 +59,12 @@ def extract_value_by_type(value):
     else:
         return None
 
-def send_request_and_await(session_id, operation, key, new_val, old_val):
+def send_request_and_await(session_id, client_id, operation, key, new_val, old_val):
     """
     Sends a request to the C++ layer and blocks until the response is ready.
     Args:
         session_id (int): The session ID.
+        client_id (int): The client ID for the request.
         operation (str or Operation): The operation to perform (string or enum).
         key (int/str): The key for the operation.
         new_val (object): The new value for the operation.
@@ -130,11 +131,12 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         else:
             raise RuntimeError("Failed to retrieve result after unblocking")
 
-def send_request(session_id, operation, key, new_val="", old_val=""):
+def send_request(session_id, client_id, operation, key, new_val="", old_val=""):
     """
     Sends a request to the C++ layer and blocks until the response is ready.
     Args:
         session_id (int): The session ID.
+        client_id (int): The client ID for the request.
         operation (str or Operation): The operation to perform (string or enum).
         key (int/str): The key for the operation.
         new_val (object): The new value for the operation.
@@ -172,7 +174,7 @@ def send_request(session_id, operation, key, new_val="", old_val=""):
         raise RuntimeError("Invalid command_id returned by async_send_request")
     return command_id
 
-def await_request(session_id, command_id, timeout=20):
+def await_request(session_id, client_id, command_id, timeout=20):
     print("Awaiting request", command_id)
 
     success, resp = async_get_response(session_id, command_id)

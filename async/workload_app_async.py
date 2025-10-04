@@ -33,7 +33,7 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 
-def add_message(session_id, room_id, from_id, content, timestamp):
+def add_message(session_id, client_id, room_id, from_id, content, timestamp):
     pending_awaits = {*()}
     room_key = f"room:{room_id}"
     message = {
@@ -43,10 +43,10 @@ def add_message(session_id, room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
     message_json = json.dumps(message)
-    future_0 = send_request(session_id, "PUT", room_key, message_json)
+    future_0 = send_request(session_id, client_id, "PUT", room_key, message_json)
     pending_awaits.add(future_0)
     for future in pending_awaits:
-        await_request(session_id, future)
+        await_request(session_id, client_id, future)
     return (pending_awaits, None)
 
 
@@ -65,23 +65,23 @@ def create(session_id, client_id, explen):
             selector = 0
             user = np.random.uniform(0, 1e9)
             password = np.random.uniform(0, 1e9)
-            utils.create_user(session_id, str(user), str(password))
+            utils.create_user(session_id, client_id, str(user), str(password))
         elif app_request_type < 10:
             selector = 1
             user1 = np.random.uniform(0, 1e9)
             user2 = np.random.uniform(0, 1e9)
-            utils.create_private_room(session_id, user1, user2)
+            utils.create_private_room(session_id, client_id, user1, user2)
         elif app_request_type < 50:
             selector = 2
             room_id = int(np.random.uniform(0, 1e9))
             from_id = 44
             content = "heyyy"
             timestamp = time.time()
-            add_message(session_id, room_id, from_id, content, timestamp)
+            add_message(session_id, client_id, room_id, from_id, content, timestamp)
         else:
             selector = 3
             room_id = np.random.uniform(0, 1e9)
-            utils.get_messages(session_id, room_id)
+            utils.get_messages(session_id, client_id, room_id)
 
         after = int(time.time() * 1e9)
         if rampUp <= int(time.time()) and int(time.time()) < (t_end-rampDown):
