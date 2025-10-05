@@ -35,7 +35,7 @@ def get_greeting():
     return greetings[math.floor(math_random() * len(greetings))]
 
 
-def add_message(session_id, client_id, room_id, from_id, content, timestamp):
+def add_message(session_id, room_id, from_id, content, timestamp):
     room_key = f"room:{room_id}"
     message = {
         "from": from_id,
@@ -46,11 +46,11 @@ def add_message(session_id, client_id, room_id, from_id, content, timestamp):
     message_json = json.dumps(message)
     # print("about to call add message")
     utils.send_request_and_await(
-        session_id, client_id, "PUT", room_key, message_json, ""
+        session_id, "PUT", room_key, message_json, ""
     )
 
 
-def create(session_id, client_id, explen):
+def create(session_id, clientid, explen):
     print("SESSION ID", session_id)
 
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
@@ -68,12 +68,12 @@ def create(session_id, client_id, explen):
             selector = 0
             user = np.random.uniform(0, 100)
             password = np.random.uniform(0, 100)
-            utils_app_sync.create_user(session_id, client_id, str(user), str(password))
+            utils_app_sync.create_user(session_id, str(user), str(password))
         elif app_request_type < 10:
             selector = 1
             user1 = int(np.random.uniform(0, 100))
             user2 = int(np.random.uniform(0, 100))
-            utils_app_sync.create_private_room(session_id, client_id, user1, user2)
+            utils_app_sync.create_private_room(session_id, user1, user2)
         elif app_request_type < 50:
             selector = 2
             room_id = int(np.random.uniform(0, 100))
@@ -86,7 +86,7 @@ def create(session_id, client_id, explen):
                 print(f"[DEBUG] add_message params: room_id={room_id}, from_id={from_id}, content={content}, ts={timestamp}", file=sys.stderr)
             except Exception:
                 pass
-            add_message(session_id, client_id, room_id, from_id, content, timestamp)
+            add_message(session_id, room_id, from_id, content, timestamp)
         else:
             selector = 3
             room_id = int(np.random.uniform(0, 100))
@@ -96,7 +96,7 @@ def create(session_id, client_id, explen):
                 print(f"[DEBUG] get_messages call: room_id={room_id}", file=sys.stderr)
             except Exception:
                 pass
-            utils_app_sync.get_messages(session_id, client_id, room_id)
+            utils_app_sync.get_messages(session_id, room_id)
         
         after = int(time.time() * 1e9)
         if rampUp <= int(time.time()) and int(time.time()) < (t_end - rampDown):
