@@ -8,11 +8,15 @@ import redisstore
 import sync.workload_app_sync as workload_app_sync
 from iocl.iocl_utils import send_request_and_await
 
+
 def run_app(session_id, client_id, client_type, explen):
     # Initialize database and demo data
     print("using paxos client utils!!", file=sys.stderr)
+    print("CLIENT ID", client_id, file=sys.stderr)
     if int(client_id) == 0:
-        total_users_exist = send_request_and_await(session_id, "EXISTS", "total_users", "", "")
+        total_users_exist = send_request_and_await(
+            session_id, "EXISTS", "total_users", "", ""
+        )
         if total_users_exist == "0":
             send_request_and_await(session_id, "SET", "total_users", "0", "")
             send_request_and_await(session_id, "SET", f"room:0:name", "General", "")

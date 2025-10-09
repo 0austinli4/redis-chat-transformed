@@ -1,12 +1,12 @@
 import asyncio
-import sync.utils_app_sync as utils
+import sync.utils_app_sync as utils_app_sync
 import iocl.iocl_utils as redis_sync_utils
 import math
 import numpy as np
 import json
 import random
 import time
-import workload_app_sync
+
 try:
     import redisstore
 except ImportError:
@@ -45,7 +45,7 @@ def add_message(session_id, room_id, from_id, content, timestamp):
     }
     message_json = json.dumps(message)
     # print("about to call add message")
-    utils.send_request_and_await(
+    redis_sync_utils.send_request_and_await(
         session_id, "PUT", room_key, message_json, ""
     )
 
@@ -63,7 +63,7 @@ def create(session_id, clientid, explen):
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
         before = int(time.time() * 1e9)
-        
+
         if app_request_type < 2:
             selector = 0
             user = np.random.uniform(0, 100)
@@ -80,24 +80,12 @@ def create(session_id, clientid, explen):
             from_id = 44
             content = "heyyy"
             timestamp = time.time()
-            # Debug: log add_message params
-            try:
-                import sys
-                print(f"[DEBUG] add_message params: room_id={room_id}, from_id={from_id}, content={content}, ts={timestamp}", file=sys.stderr)
-            except Exception:
-                pass
             add_message(session_id, room_id, from_id, content, timestamp)
         else:
             selector = 3
             room_id = int(np.random.uniform(0, 100))
-            # Debug: log before fetching messages
-            try:
-                import sys
-                print(f"[DEBUG] get_messages call: room_id={room_id}", file=sys.stderr)
-            except Exception:
-                pass
             utils_app_sync.get_messages(session_id, room_id)
-        
+
         after = int(time.time() * 1e9)
         if rampUp <= int(time.time()) and int(time.time()) < (t_end - rampDown):
             lat = after - before

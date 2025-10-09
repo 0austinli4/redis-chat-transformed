@@ -13,21 +13,21 @@ def create_user(session_id, username, password):
     hashed_password = bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt(10))
     next_id = send_request_and_await(session_id, "INCR", "total_users", None, None)
     # Debug: log next_id and its type
-    try:
-        print(f"[DEBUG] create_user next_id={next_id} type={type(next_id)}", file=sys.stderr)
-    except Exception:
-        pass
+    # try:
+    #     print(f"[DEBUG] create_user next_id={next_id} type={type(next_id)}", file=sys.stderr)
+    # except Exception:
+    #     pass
     user_key = f"user:{next_id}"
 
     hashed_password_str = hashed_password.decode("utf-8")
 
-    send_request_and_await(session_id, "SET", username_key, user_key,None)
+    send_request_and_await(session_id, "SET", username_key, user_key, None)
     send_request_and_await(
         session_id,
         "HMSET",
         user_key,
         {"username": username, "password": hashed_password_str},
-        ""
+        "",
     )
     send_request_and_await(session_id, "SADD", f"user:{next_id}:rooms", "0", None)
     return {"id": next_id, "username": username}
@@ -47,11 +47,14 @@ def get_messages(session_id, room_id=0, offset=0, size=10):
             session_id, "ZREVRANGE", room_key, offset, offset + size
         )
         # Debug: log raw values
-        try:
-            print(f"[DEBUG] get_messages raw values type={type(values)} len={getattr(values, '__len__', lambda: 'NA')()}", file=sys.stderr)
-        except Exception:
-            pass
-            
+        # try:
+        #     print(
+        #         f"[DEBUG] get_messages raw values type={type(values)} len={getattr(values, '__len__', lambda: 'NA')()}",
+        #         file=sys.stderr,
+        #     )
+        # except Exception:
+        #     pass
+
         return values
 
 
