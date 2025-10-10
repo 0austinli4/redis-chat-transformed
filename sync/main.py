@@ -22,7 +22,7 @@ def run_app(session_id, client_id, client_type, explen):
             send_request_and_await(session_id, "SET", f"room:0:name", "General", "")
     elif int(client_id) > 0:
         while True:
-            print("STILL CHECKING TRUE CLIENT ID")
+            # print("STILL CHECKING TRUE CLIENT ID")
             total_users_exist = send_request_and_await(
                 session_id, "EXISTS", "total_users", "", ""
             )
