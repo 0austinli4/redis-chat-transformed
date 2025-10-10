@@ -11,6 +11,7 @@ from redisstore import (
 )
 import sys
 
+
 def _hash_key_to_int(key):
     if isinstance(key, str):
         # Use md5 for deterministic hash, take first 8 bytes as integer
@@ -22,10 +23,10 @@ def _hash_key_to_int(key):
 def convert_value_to_python(value):
     """
     Convert a request_utils::Value object to a native Python object.
-    
+
     Args:
         value (Value): The Value object to convert.
-        
+
     Returns:
         object: The converted Python object (str, list, set, dict, or None).
     """
@@ -35,19 +36,19 @@ def convert_value_to_python(value):
 def extract_value_by_type(value):
     """
     Extract a value from a Value object based on its type, handling both Value objects and regular Python objects.
-    
+
     Args:
         value: Either a Value object or a regular Python object.
-        
+
     Returns:
         object: The extracted value in the appropriate Python type.
-        
+
     Raises:
         ValueError: If the value type is not supported.
     """
     if not hasattr(value, "type"):
         return value
-    
+
     if value.type == ValueType.STRING:
         return value.str
     elif value.type == ValueType.LIST:
@@ -58,6 +59,7 @@ def extract_value_by_type(value):
         return value.hash
     else:
         return None
+
 
 def send_request_and_await(session_id, operation, key, new_val, old_val):
     """
@@ -82,7 +84,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
             raise ValueError(f"Unknown operation string: {operation}")
     else:
         operation_enum = operation
- 
+
     key_int = _hash_key_to_int(key)
 
     # print("send request and await", session_id, operation, key, new_val, old_val)
@@ -104,9 +106,11 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
     success, efd_or_result = async_get_response(session_id, command_id)
     if hasattr(efd_or_result, "type") and efd_or_result.type == ValueType.STRING:
         try:
-            efd_or_result = int(efd_or_result.str)
+            efd_or_result_int = int(efd_or_result.str)
+            efd_or_result = efd_or_result_int
         except ValueError:
-            raise RuntimeError("Invalid Value object returned by async_get_response")
+            # not an integer -> treat as direct value instead of fd
+            return efd_or_result.str
     if not isinstance(efd_or_result, int) or efd_or_result < 0:
         raise RuntimeError(
             "Invalid event file descriptor returned by async_get_response"
@@ -130,6 +134,7 @@ def send_request_and_await(session_id, operation, key, new_val, old_val):
         else:
             raise RuntimeError("Failed to retrieve result after unblocking")
 
+
 def send_request(session_id, operation, key, new_val="", old_val=""):
     """
     Sends a request to the C++ layer and blocks until the response is ready.
@@ -140,9 +145,9 @@ def send_request(session_id, operation, key, new_val="", old_val=""):
         new_val (object): The new value for the operation.
         old_val (object): The old value for the operation.
     Returns:
-        tuple: A tuple containing the success status and the resulting request ID to await. 
+        tuple: A tuple containing the success status and the resulting request ID to await.
     """
-     # If operation is a string, map to redisstore.Operation
+    # If operation is a string, map to redisstore.Operation
     if isinstance(operation, str):
         op_str = operation.upper()
         if hasattr(Operation, op_str):
@@ -172,6 +177,7 @@ def send_request(session_id, operation, key, new_val="", old_val=""):
         raise RuntimeError("Invalid command_id returned by async_send_request")
     return command_id
 
+
 def await_request(session_id, command_id, timeout=20):
     print("Awaiting request", command_id)
 
@@ -190,6 +196,7 @@ def await_request(session_id, command_id, timeout=20):
 
     # Wait for fd
     import select, os, fcntl
+
     try:
         fcntl.fcntl(efd, fcntl.F_GETFD)  # validate fd
     except OSError as e:
@@ -210,4 +217,6 @@ def await_request(session_id, command_id, timeout=20):
     if success:
         return success, extract_value_by_type(result)
     else:
-        raise RuntimeError(f"Failed to retrieve result after unblocking for command {command_id}")
+        raise RuntimeError(
+            f"Failed to retrieve result after unblocking for command {command_id}"
+        )
