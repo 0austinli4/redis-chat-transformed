@@ -49,15 +49,19 @@ def add_message(session_id, room_id, from_id, content, timestamp):
         await_request(session_id, future)
     return (pending_awaits, None)
 
+
 import sys
+
 
 def create(session_id, clientid, explen):
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
     t_start = time.time()
     t_end = t_start + int(explen)
-    start_sec = int(t_start)
-    start_usec = int((t_start - start_sec) * 1e6)
-    print(f"#start,0,0")
+    # ramp-up and ramp-down windows in seconds
+    rampUp = 10
+    rampDown = 10
+    # start time marker not required beyond printing
+    print("#start,0,0")
 
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
@@ -90,8 +94,12 @@ def create(session_id, clientid, explen):
         lat = after - before  # latency in nanoseconds
         optime = int((time.time() - t_start) * 1e9)  # time since start in nanoseconds
         optype = api[selector]
-        print(f"app,{lat},{optime},{clientid}")
-        print(f"{optype},{lat},{optime},{clientid}")
+
+        # Only record/print latencies during steady-state (after rampUp and before rampDown)
+        now = time.time()
+        if now >= (t_start + rampUp) and now < (t_end - rampDown):
+            print(f"app,{lat},{optime},{clientid}")
+            print(f"{optype},{lat},{optime},{clientid}")
 
     # end marker exactly compatible with current parser
     elapsed = time.time() - t_start
