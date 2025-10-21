@@ -49,19 +49,17 @@ def add_message(session_id, room_id, from_id, content, timestamp):
         session_id, "PUT", room_key, message_json, ""
     )
 
-
 def create(session_id, clientid, explen):
-    print("SESSION ID", session_id)
-
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
-    t_end = int(time.time()) + int(explen)
-    rampUp = 20
-    rampDown = 10
-
-    selector = 0
+    t_start = time.time()
+    t_end = t_start + int(explen)
+    start_sec = int(t_start)
+    start_usec = int((t_start - start_sec) * 1e6)
+    print(f"#start,0,0")
 
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
+        # use nanoseconds for latency only
         before = int(time.time() * 1e9)
 
         if app_request_type < 2:
@@ -87,8 +85,114 @@ def create(session_id, clientid, explen):
             utils_app_sync.get_messages(session_id, room_id)
 
         after = int(time.time() * 1e9)
-        if rampUp <= int(time.time()) and int(time.time()) < (t_end - rampDown):
-            lat = after - before
-            optype = api[selector]
-            print(f"app,{lat}")
-            print(f"{optype},{lat}")
+        lat = after - before  # latency in nanoseconds
+        optime = int((time.time() - t_start) * 1e9)  # time since start in nanoseconds
+        optype = api[selector]
+        print(f"app,{lat},{optime},{clientid}")
+        print(f"{optype},{lat},{optime},{clientid}")
+
+    # end marker exactly compatible with current parser
+    elapsed = time.time() - t_start
+    end_sec = int(elapsed)
+    end_usec = int((elapsed - end_sec) * 1e6)
+    print(f"#end,{end_sec},{end_usec},{clientid}")
+
+
+
+
+# def create(session_id, clientid, explen):
+#     api = ["create_user", "create_private_room", "add_message", "get_messages"]
+
+#     t_start = time.time()
+#     t_end = t_start + int(explen)
+
+#     # print start marker exactly like before
+#     start_sec = int(t_start)
+#     start_usec = int((t_start - start_sec) * 1e6)
+#     print(f"#start,{start_sec},{start_usec}")
+
+#     while time.time() < t_end:
+#         app_request_type = np.random.uniform(0, 100)
+#         # use nanoseconds for latency only
+#         before = int(time.time() * 1e9)
+
+#         if app_request_type < 2:
+#             selector = 0
+#             user = np.random.uniform(0, 100)
+#             password = np.random.uniform(0, 100)
+#             utils_app_sync.create_user(session_id, str(user), str(password))
+#         elif app_request_type < 10:
+#             selector = 1
+#             user1 = int(np.random.uniform(0, 100))
+#             user2 = int(np.random.uniform(0, 100))
+#             utils_app_sync.create_private_room(session_id, user1, user2)
+#         elif app_request_type < 50:
+#             selector = 2
+#             room_id = int(np.random.uniform(0, 100))
+#             from_id = 44
+#             content = "heyyy"
+#             timestamp = time.time()
+#             add_message(session_id, room_id, from_id, content, timestamp)
+#         else:
+#             selector = 3
+#             room_id = int(np.random.uniform(0, 100))
+#             utils_app_sync.get_messages(session_id, room_id)
+
+#         after = int(time.time() * 1e9)
+
+#         lat = after - before
+#         optime = after
+#         optype = api[selector]
+
+#         print(f"app,{lat},{optime},{clientid}")
+#         print(f"{optype},{lat},{optime},{clientid}")
+
+#     # end marker exactly compatible with current parser
+#     t_end_actual = time.time()
+#     end_sec = int(t_end_actual)
+#     end_usec = int((t_end_actual - end_sec) * 1e6)
+#     print(f"#end,{end_sec},{end_usec},{clientid}")
+
+
+# def create(session_id, clientid, explen):
+#     # print("SESSION ID", session_id)
+
+#     api = ["create_user", "create_private_room", "add_message", "get_messages"]
+#     t_end = int(time.time()) + int(explen)
+#     rampUp = 20
+#     rampDown = 10
+
+#     selector = 0
+
+#     while time.time() < t_end:
+#         app_request_type = np.random.uniform(0, 100)
+#         before = int(time.time() * 1e9)
+
+#         if app_request_type < 2:
+#             selector = 0
+#             user = np.random.uniform(0, 100)
+#             password = np.random.uniform(0, 100)
+#             utils_app_sync.create_user(session_id, str(user), str(password))
+#         elif app_request_type < 10:
+#             selector = 1
+#             user1 = int(np.random.uniform(0, 100))
+#             user2 = int(np.random.uniform(0, 100))
+#             utils_app_sync.create_private_room(session_id, user1, user2)
+#         elif app_request_type < 50:
+#             selector = 2
+#             room_id = int(np.random.uniform(0, 100))
+#             from_id = 44
+#             content = "heyyy"
+#             timestamp = time.time()
+#             add_message(session_id, room_id, from_id, content, timestamp)
+#         else:
+#             selector = 3
+#             room_id = int(np.random.uniform(0, 100))
+#             utils_app_sync.get_messages(session_id, room_id)
+
+#         after = int(time.time() * 1e9)
+#         if rampUp <= int(time.time()) and int(time.time()) < (t_end - rampDown):
+#             lat = after - before
+#             optype = api[selector]
+#             print(f"app,{lat}")
+#             print(f"{optype},{lat}")

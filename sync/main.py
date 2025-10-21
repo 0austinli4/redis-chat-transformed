@@ -11,8 +11,8 @@ from iocl.iocl_utils import send_request_and_await
 
 def run_app(session_id, client_id, client_type, explen):
     # Initialize database and demo data
-    print("using paxos client utils!!", file=sys.stderr)
-    print("CLIENT ID", client_id, file=sys.stderr)
+    # print("using paxos client utils!!", file=sys.stderr)
+    # print("CLIENT ID", client_id, file=sys.stderr)
     if int(client_id) == 0:
         total_users_exist = send_request_and_await(
             session_id, "EXISTS", "total_users", "", ""
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         set_env_from_command_line_args(args)
         init_benchmark_with_config(args.config_path)
         session_id = redisstore.custom_init_session()
-        print("Session ID:", session_id)
+        # print("Session ID:", session_id)
         run_app(session_id, args.clientid, "multi_paxos", args.explen)
 
     except FileNotFoundError:

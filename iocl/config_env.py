@@ -4,7 +4,7 @@ import json
 
 def load_config_and_set_env(config_path):
     """Load JSON config and set environment variables for C++ binding"""
-    print(f"Loading config from: {config_path}")
+    # print(f"Loading config from: {config_path}")
     with open(config_path, "r") as f:
         config = json.load(f)
     config_dir = os.path.dirname(os.path.abspath(config_path))
@@ -57,13 +57,11 @@ def load_config_and_set_env(config_path):
             if isinstance(value, list):
                 value = value[0]
             os.environ[env_name] = str(value)
-            # print(f"Set {env_name} = {value}")
     if "replication_protocol_settings" in config:
         rps = config["replication_protocol_settings"]
         if "message_transport_type" in rps:
             transport_type = rps["message_transport_type"]
             os.environ["IOCL_TRANSPORT_PROTOCOL"] = transport_type
-            # print(f"Set IOCL_TRANSPORT_PROTOCOL = {transport_type}")
     if "client_arrival_rate" not in config:
         os.environ["IOCL_CLIENT_ARRIVAL_RATE"] = "1.0"
     if "client_think_time" not in config:
@@ -80,13 +78,10 @@ def load_config_and_set_env(config_path):
         "IOCL_REPLICA_CONFIG_PATHS" not in os.environ
         and "IOCL_NET_CONFIG_PATH" not in os.environ
     ):
-        print("No command-line config paths detected, resolving from JSON config")
+        # print("No command-line config paths detected, resolving from JSON config")
         resolve_config_paths(config, config_dir)
-    else:
-        print(
-            "Command-line config paths detected, skipping JSON config path resolution"
-        )
-    print("Environment variables set successfully")
+
+    # print("Environment variables set successfully")
 
 
 def resolve_config_paths(config, config_dir):
@@ -101,10 +96,10 @@ def resolve_config_paths(config, config_dir):
             if not os.path.isabs(file_path):
                 abs_path = os.path.join(config_dir, file_path)
                 os.environ[env_name] = abs_path
-                print(f"Resolved {config_key}: {file_path} -> {abs_path}")
+                # print(f"Resolved {config_key}: {file_path} -> {abs_path}")
             else:
                 os.environ[env_name] = file_path
-                print(f"Using absolute path for {config_key}: {file_path}")
+                # print(f"Using absolute path for {config_key}: {file_path}")
     if "replica_config_format_str" in config and "num_shards" in config:
         format_str = config["replica_config_format_str"]
         num_shards = config["num_shards"]
@@ -115,7 +110,7 @@ def resolve_config_paths(config, config_dir):
             replica_paths.append(abs_path)
         replica_paths_str = ",".join(replica_paths)
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = replica_paths_str
-        print(f"Set IOCL_REPLICA_CONFIG_PATHS = {replica_paths_str}")
+        # print(f"Set IOCL_REPLICA_CONFIG_PATHS = {replica_paths_str}")
     if "shard_config_format_str" in config and "num_shards" in config:
         format_str = config["shard_config_format_str"]
         num_shards = config["num_shards"]
@@ -126,31 +121,24 @@ def resolve_config_paths(config, config_dir):
             shard_paths.append(abs_path)
         shard_paths_str = ",".join(shard_paths)
         os.environ["IOCL_SHARD_CONFIG_PATHS"] = shard_paths_str
-        print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
+        # print(f"Set IOCL_SHARD_CONFIG_PATHS = {shard_paths_str}")
 
 
 def set_env_from_command_line_args(args):
     if args.clientid is not None:
         os.environ["IOCL_CLIENT_ID"] = str(args.clientid)
-        # print(f"Set IOCL_CLIENT_ID = {args.clientid}")
     if args.num_keys is not None:
         os.environ["IOCL_CLIENT_NUM_KEYS"] = str(args.num_keys)
-        # print(f"Set IOCL_CLIENT_NUM_KEYS = {args.num_keys}")
     if args.num_shards is not None:
         os.environ["IOCL_NUM_SHARDS"] = str(args.num_shards)
-        # print(f"Set IOCL_NUM_SHARDS = {args.num_shards}")
     if args.replica_config_paths is not None:
         os.environ["IOCL_REPLICA_CONFIG_PATHS"] = args.replica_config_paths
-        # print(f"Set IOCL_REPLICA_CONFIG_PATHS = {args.replica_config_paths}")
     if args.net_config_path is not None:
         os.environ["IOCL_NET_CONFIG_PATH"] = args.net_config_path
-        # print(f"Set IOCL_NET_CONFIG_PATH = {args.net_config_path}")
     if args.client_host is not None:
         os.environ["IOCL_CLIENT_HOST"] = args.client_host
-        # print(f"Set IOCL_CLIENT_HOST = {args.client_host}")
     if args.trans_protocol is not None:
         os.environ["IOCL_TRANSPORT_PROTOCOL"] = args.trans_protocol
-        # print(f"Set IOCL_TRANSPORT_PROTOCOL = {args.trans_protocol}")
 
 
 def init_benchmark_with_config(config_path):

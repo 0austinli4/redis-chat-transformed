@@ -9,7 +9,7 @@ from iocl.iocl_utils import send_request, await_request
 import redisstore
 
 def run_app(session_id, client_id, client_type, explen):
-    print("in MDL python", file=sys.stderr)
+    # print("in MDL python", file=sys.stderr)
 
     pending_awaits = {*()}
     if int(client_id) == 0:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         set_env_from_command_line_args(args)
         init_benchmark_with_config(args.config_path)
         session_id = redisstore.custom_init_session()
-        print("Session ID:", session_id)
+        # print("Session ID:", session_id)
         run_app(session_id, args.clientid, "multi_paxos", args.explen)
 
     except FileNotFoundError:
