@@ -13,11 +13,17 @@ from redisstore import (
 import sys
 
 # Global flag to enable/disable timing instrumentation
-ENABLE_TIMING = os.environ.get("IOCL_ENABLE_TIMING", "0") == "1"
-
+ENABLE_TIMING = os.environ.get("IOCL_ENABLE_TIMING", "") == "1"
+ENABLE_TIMING = 1
 def _ns_timestamp():
     """Get current timestamp in nanoseconds"""
-    return time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+    # Python 3.7+ has clock_gettime_ns, older versions need conversion
+    if hasattr(time, 'clock_gettime_ns'):
+        return time.clock_gettime_ns(time.CLOCK_MONOTONIC)
+    else:
+        # Fallback for Python 3.6 and earlier
+        t = time.clock_gettime(time.CLOCK_MONOTONIC)
+        return int(t * 1e9)
 
 def _log_timing(location, timestamp_ns, client_id=0, command_id=None, session_id=None, context=""):
     """
