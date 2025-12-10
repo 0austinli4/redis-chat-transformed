@@ -58,8 +58,8 @@ def create(session_id, clientid, explen):
     t_start = time.time()
     t_end = t_start + int(explen)
     # ramp-up and ramp-down windows in seconds
-    rampUp = 10
-    rampDown = 10
+    rampUp = 1
+    rampDown = 1
     # start time marker not required beyond printing
     print("#start,0,0")
 

@@ -1,40 +1,50 @@
 import sys
 import os
 
+print("=" * 100, file=sys.stderr)
+sys.stderr.flush()
+print("SIMPLE_TEST.PY ASYNC - FIRST LINE EXECUTING", file=sys.stderr)
+sys.stderr.flush()
+print("=" * 100, file=sys.stderr)
+sys.stderr.flush()
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
-import redisstore
-import sync.workload_app_sync as workload_app_sync
-from iocl.iocl_utils import send_request_and_await
+from iocl.iocl_utils import send_request, await_request
 
 
 def run_app(session_id, client_id, client_type, explen):
-    # Initialize database and demo data
-    # print("using paxos client utils!!", file=sys.stderr)
-    # print("CLIENT ID", client_id, file=sys.stderr)
-    if int(client_id) == 0:
-        total_users_exist = send_request_and_await(
-            session_id, "EXISTS", "total_users", "", ""
-        )
-        if total_users_exist == "0":
-            send_request_and_await(session_id, "SET", "total_users", "0", "")
-            send_request_and_await(session_id, "SET", f"room:0:name", "General", "")
-    elif int(client_id) > 0:
-        while True:
-            # print("STILL CHECKING TRUE CLIENT ID")
-            total_users_exist = send_request_and_await(
-                session_id, "EXISTS", "total_users", "", ""
-            )
-            if total_users_exist != "0":
-                break
-    workload_app_sync.create(session_id, client_id, explen)
+    print("=" * 80, file=sys.stderr)
+    print("RUNNING SIMPLE_TEST.PY (ASYNC VERSION) - IOCL-CT", file=sys.stderr)
+    print("=" * 80, file=sys.stderr)
+
+    # Simple test: Issue 2 requests concurrently for IOCL
+    # Send both requests without waiting
+    future_0 = send_request(session_id, "INCR", "test_counter_1")
+    future_1 = send_request(session_id, "INCR", "test_counter_2")
+
+    # Now await both results
+    result_0 = await_request(session_id, future_0)
+    result_1 = await_request(session_id, future_1)
+
+    print(f"Client {client_id}: Concurrent request results: {result_0}, {result_1}", file=sys.stderr)
     return
 
+
+print("__name__ is:", __name__, file=sys.stderr)
+sys.stderr.flush()
 
 if __name__ == "__main__":
     import argparse
     import sys
+
+    print("=" * 80, file=sys.stderr)
+    sys.stderr.flush()
+    print("SIMPLE_TEST.PY (ASYNC) STARTING - ARGUMENTS:", sys.argv, file=sys.stderr)
+    sys.stderr.flush()
+    print("=" * 80, file=sys.stderr)
+    sys.stderr.flush()
 
     parser = argparse.ArgumentParser(description="IOCL Benchmark Client")
 
@@ -90,19 +100,40 @@ if __name__ == "__main__":
     parser.add_argument("--stats_file", type=str, default="", help="Stats file path")
 
     args = parser.parse_args()
+    print("PARSED ARGS:", args, file=sys.stderr)
+    sys.stderr.flush()
 
     try:
+        print(f"Setting env from command line args...", file=sys.stderr)
+        sys.stderr.flush()
         set_env_from_command_line_args(args)
+
+        print(f"Initializing benchmark with config: {args.config_path}", file=sys.stderr)
+        sys.stderr.flush()
         init_benchmark_with_config(args.config_path)
+
+        print(f"Importing redisstore...", file=sys.stderr)
+        sys.stderr.flush()
+        import redisstore
+        print(f"redisstore imported successfully", file=sys.stderr)
+        sys.stderr.flush()
+
+        print(f"Creating session...", file=sys.stderr)
+        sys.stderr.flush()
         session_id = redisstore.custom_init_session()
+        print(f"Session created: {session_id}", file=sys.stderr)
+
+        print(f"Calling run_app with clientid={args.clientid}, explen={args.explen}", file=sys.stderr)
         run_app(session_id, args.clientid, "multi_paxos", args.explen)
 
+        print(f"run_app completed successfully", file=sys.stderr)
+
     except FileNotFoundError:
-        print(f"Error: Config file not found at {args.config_path}")
+        print(f"Error: Config file not found at {args.config_path}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"Error initializing client: {e}")
+        print(f"Error initializing client: {e}", file=sys.stderr)
         import traceback
 
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         sys.exit(1)

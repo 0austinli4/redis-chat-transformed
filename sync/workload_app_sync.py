@@ -44,7 +44,6 @@ def add_message(session_id, room_id, from_id, content, timestamp):
         "roomId": room_id,
     }
     message_json = json.dumps(message)
-    # print("about to call add message")
     redis_sync_utils.send_request_and_await(
         session_id, "PUT", room_key, message_json, ""
     )
