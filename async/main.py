@@ -54,7 +54,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--explen",
-        action="store",
+        type=int,
         dest="explen",
         default=30,
         help="Experiment length override",

@@ -55,9 +55,9 @@ def create(session_id, clientid, explen=30, warmup_secs=0, cooldown_secs=0):
 
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
 
-    rampUp = warmup_secs       # seconds
-    rampDown = cooldown_secs   # seconds
-    total_explen = explen + rampUp + rampDown
+    rampUp = int(warmup_secs)       # seconds
+    rampDown = int(cooldown_secs)   # seconds
+    total_explen = int(explen) + rampUp + rampDown
     
     t_start = time.time()
     t_end = t_start + total_explen
