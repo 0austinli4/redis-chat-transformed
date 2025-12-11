@@ -54,9 +54,6 @@ import sys
 
 
 def create(session_id, clientid, explen, warmup_secs=0, cooldown_secs=0):
-    import time, numpy as np
-    import utils_app_sync as utils
-
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
 
     rampUp = int(warmup_secs)
