@@ -52,7 +52,6 @@ def add_message(session_id, room_id, from_id, content, timestamp):
 def create(session_id, clientid, explen=30, warmup_secs=0, cooldown_secs=0):
     import time, numpy as np
     import utils_app_sync
-    from utils_app_sync import add_message
 
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
 
