@@ -8,7 +8,7 @@ from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_
 from iocl.iocl_utils import send_request, await_request
 import redisstore
 
-def run_app(session_id, client_id, client_type, explen):
+def run_app(session_id, client_id, client_type, explen, warmup_secs, cooldown_secs):
     # print("in MDL python", file=sys.stderr)
 
     pending_awaits = {*()}
@@ -34,7 +34,7 @@ def run_app(session_id, client_id, client_type, explen):
             pending_awaits.remove(future_0)
             if total_users_exist != "0":
                 break
-    workload_app_async.create(session_id, client_id, explen)
+    workload_app_async.create(session_id, client_id, explen, warmup_secs, cooldown_secs)
 
 
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         init_benchmark_with_config(args.config_path)
         session_id = redisstore.custom_init_session()
         # print("Session ID:", session_id)
-        run_app(session_id, args.clientid, "multi_paxos", args.explen)
+        run_app(session_id, args.clientid, "iocl/async", args.explen, args.warmup_secs, args.cooldown_secs)
 
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")

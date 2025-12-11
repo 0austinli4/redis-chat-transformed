@@ -9,7 +9,7 @@ import sync.workload_app_sync as workload_app_sync
 from iocl.iocl_utils import send_request_and_await
 
 
-def run_app(session_id, client_id, client_type, explen):
+def run_app(session_id, client_id, client_type, explen, warmup_secs, cooldown_secs):
     # Initialize database and demo data
     # print("using paxos client utils!!", file=sys.stderr)
     # print("CLIENT ID", client_id, file=sys.stderr)
@@ -28,7 +28,7 @@ def run_app(session_id, client_id, client_type, explen):
             )
             if total_users_exist != "0":
                 break
-    workload_app_sync.create(session_id, client_id, explen)
+    workload_app_sync.create(session_id, client_id, explen, warmup_secs, cooldown_secs)
     return
 
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         set_env_from_command_line_args(args)
         init_benchmark_with_config(args.config_path)
         session_id = redisstore.custom_init_session()
-        run_app(session_id, args.clientid, "multi_paxos", args.explen)
+        run_app(session_id, args.clientid, "multi_paxos", args.explen, args.warmup_secs, args.cooldown_secs)
 
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}")

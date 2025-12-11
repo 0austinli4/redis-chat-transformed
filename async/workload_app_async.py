@@ -53,13 +53,15 @@ def add_message(session_id, room_id, from_id, content, timestamp):
 import sys
 
 
-def create(session_id, clientid, explen):
+def create(session_id, clientid, explen, warmup_secs=0, cooldown_secs=0):
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
+
+    rampUp = warmup_secs       # seconds
+    rampDown = cooldown_secs   # seconds
+    total_explen = explen + rampUp + rampDown
+
     t_start = time.time()
-    t_end = t_start + int(explen)
-    # ramp-up and ramp-down windows in seconds
-    rampUp = 2
-    rampDown = 2
+    t_end = t_start + total_explen
     # start time marker not required beyond printing
     print("#start,0,0")
 
@@ -95,9 +97,9 @@ def create(session_id, clientid, explen):
         optime = int((time.time() - t_start) * 1e9)  # time since start in nanoseconds
         optype = api[selector]
 
-        # Only record/print latencies during steady-state (after rampUp and before rampDown)
         now = time.time()
-        if now >= (t_start + rampUp) and now < (t_end - rampDown):
+        # Only print latencies during steady-state
+        if rampUp <= (now - t_start) < (total_explen - rampDown):
             print(f"app,{lat},{optime},{clientid}")
             print(f"{optype},{lat},{optime},{clientid}")
 
