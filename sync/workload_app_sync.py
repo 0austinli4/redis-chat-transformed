@@ -55,12 +55,15 @@ def create(session_id, clientid, explen=30, warmup_secs=0, cooldown_secs=0):
 
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
 
-    rampUp = int(warmup_secs)       # seconds
-    rampDown = int(cooldown_secs)   # seconds
-    total_explen = int(explen) + rampUp + rampDown
-    
+    rampUp = int(warmup_secs)
+    rampDown = int(cooldown_secs)
+
+    if rampUp + rampDown >= explen:
+        raise ValueError("Ramp-up + ramp-down must be less than total experiment length")
+
+    steady_secs = explen - rampUp - rampDown
     t_start = time.time()
-    t_end = t_start + total_explen
+    t_end = t_start + explen
 
     print("#start,0,0")
 
@@ -97,7 +100,7 @@ def create(session_id, clientid, explen=30, warmup_secs=0, cooldown_secs=0):
 
         now = time.time()
         # Only print latencies during steady-state
-        if rampUp <= (now - t_start) < (total_explen - rampDown):
+        if rampUp <= (now - t_start) < (rampUp + steady_secs):
             print(f"app,{lat},{optime},{clientid}")
             print(f"{optype},{lat},{optime},{clientid}")
 

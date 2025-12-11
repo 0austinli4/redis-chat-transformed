@@ -54,21 +54,26 @@ import sys
 
 
 def create(session_id, clientid, explen, warmup_secs=0, cooldown_secs=0):
+    import time, numpy as np
+    import utils_app_sync as utils
+
     api = ["create_user", "create_private_room", "add_message", "get_messages"]
 
-    rampUp = int(warmup_secs)       # seconds
-    rampDown = int(cooldown_secs)   # seconds
-    total_explen = int(explen) + rampUp + rampDown
+    rampUp = int(warmup_secs)
+    rampDown = int(cooldown_secs)
 
+    if rampUp + rampDown >= explen:
+        raise ValueError("Ramp-up + ramp-down must be less than total experiment length")
+
+    steady_secs = explen - rampUp - rampDown
     t_start = time.time()
-    t_end = t_start + total_explen
-    # start time marker not required beyond printing
+    t_end = t_start + explen
+
     print("#start,0,0")
 
     while time.time() < t_end:
         app_request_type = np.random.uniform(0, 100)
-        # use nanoseconds for latency only
-        before = int(time.time() * 1e9)
+        before = int(time.time() * 1e9)  # latency in ns
 
         if app_request_type < 2:
             selector = 0
@@ -93,18 +98,18 @@ def create(session_id, clientid, explen, warmup_secs=0, cooldown_secs=0):
             utils.get_messages(session_id, room_id)
 
         after = int(time.time() * 1e9)
-        lat = after - before  # latency in nanoseconds
-        optime = int((time.time() - t_start) * 1e9)  # time since start in nanoseconds
+        lat = after - before
+        optime = int((time.time() - t_start) * 1e9)
         optype = api[selector]
 
         now = time.time()
         # Only print latencies during steady-state
-        if rampUp <= (now - t_start) < (total_explen - rampDown):
+        if rampUp <= (now - t_start) < (rampUp + steady_secs):
             print(f"app,{lat},{optime},{clientid}")
             print(f"{optype},{lat},{optime},{clientid}")
 
-    # end marker exactly compatible with current parser
     elapsed = time.time() - t_start
     end_sec = int(elapsed)
     end_usec = int((elapsed - end_sec) * 1e6)
     print(f"#end,{end_sec},{end_usec},{clientid}")
+
