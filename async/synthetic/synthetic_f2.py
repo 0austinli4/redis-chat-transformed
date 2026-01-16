@@ -3,7 +3,7 @@ import os
 
 print("=" * 100, file=sys.stderr)
 sys.stderr.flush()
-print("SIMPLE_TEST.PY SYNC", file=sys.stderr)
+print("SIMPLE_TEST.PY ASYNC - FIRST LINE EXECUTING", file=sys.stderr)
 sys.stderr.flush()
 print("=" * 100, file=sys.stderr)
 sys.stderr.flush()
@@ -11,25 +11,27 @@ sys.stderr.flush()
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
-from iocl.iocl_utils import send_request_and_await
+from iocl.iocl_utils import send_request, await_request
 
 
 def run_app(session_id, client_id, client_type, explen):
-    print(f"RUNNING SIMPLE_TEST.PY (SYNC VERSION) - VR", file=sys.stderr)
-    sys.stderr.flush()
-    # Simple test: Issue 2 requests sequentially for VR
-    # Send and await first request
-    result_0 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
+    print("RUNNING SIMPLE_TEST.PY (ASYNC VERSION) - IOCL-CT", file=sys.stderr)
 
-    print(f"Request 0 completed", file=sys.stderr)
-    sys.stderr.flush()
-    # Send and await second request
-    result_1 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_2", "value2", None)
-    print(f"Request 1 completed", file=sys.stderr)
-    sys.stderr.flush()
+    # Simple test: Issue 2 requests concurrently for IOCL
+    # Send both requests without waiting
+    future_0 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
+    future_1 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value2", None)
 
-    print(f"Client {client_id}: Sequential request results: {result_0}, {result_1}", file=sys.stderr)
+    # Now await both results
+    result_0 = await_request(session_id, future_0)
+    result_1 = await_request(session_id, future_1)
+
+    print(f"Client {client_id}: Concurrent request results: {result_0}, {result_1}", file=sys.stderr)
     return
+
+
+print("__name__ is:", __name__, file=sys.stderr)
+sys.stderr.flush()
 
 if __name__ == "__main__":
     import argparse
@@ -37,7 +39,7 @@ if __name__ == "__main__":
 
     print("=" * 80, file=sys.stderr)
     sys.stderr.flush()
-    print("SIMPLE_TEST.PY (SYNC) STARTING - ARGUMENTS:", sys.argv, file=sys.stderr)
+    print("SIMPLE_TEST.PY (ASYNC) STARTING - ARGUMENTS:", sys.argv, file=sys.stderr)
     sys.stderr.flush()
     print("=" * 80, file=sys.stderr)
     sys.stderr.flush()
@@ -96,32 +98,33 @@ if __name__ == "__main__":
     parser.add_argument("--stats_file", type=str, default="", help="Stats file path")
 
     args = parser.parse_args()
-    # print("PARSED ARGS:", args, file=sys.stderr)
+    print("PARSED ARGS:", args, file=sys.stderr)
     sys.stderr.flush()
 
     try:
-        # print(f"Setting env from command line args...", file=sys.stderr)
+        print(f"Setting env from command line args...", file=sys.stderr)
         sys.stderr.flush()
         set_env_from_command_line_args(args)
 
-        # print(f"Initializing benchmark with config: {args.config_path}", file=sys.stderr)
+        print(f"Initializing benchmark with config: {args.config_path}", file=sys.stderr)
         sys.stderr.flush()
         init_benchmark_with_config(args.config_path)
 
-        # print(f"Importing redisstore...", file=sys.stderr)
-        # sys.stderr.flush()
+        print(f"Importing redisstore...", file=sys.stderr)
+        sys.stderr.flush()
         import redisstore
-        # print(f"redisstore imported successfully", file=sys.stderr)
-        # sys.stderr.flush()
+        print(f"redisstore imported successfully", file=sys.stderr)
+        sys.stderr.flush()
 
-        # print(f"Creating session...", file=sys.stderr)
-        # sys.stderr.flush()
+        print(f"Creating session...", file=sys.stderr)
+        sys.stderr.flush()
         session_id = redisstore.custom_init_session()
+        print(f"Session created: {session_id}", file=sys.stderr)
 
-        print(f"Calling run_app with clientid={args.clientid}, explen={args.explen}, session_id={session_id}", file=sys.stderr)
+        print(f"Calling run_app with clientid={args.clientid}, explen={args.explen}", file=sys.stderr)
         run_app(session_id, args.clientid, "multi_paxos", args.explen)
 
-        # print(f"run_app completed successfully", file=sys.stderr)
+        print(f"run_app completed successfully", file=sys.stderr)
 
     except FileNotFoundError:
         print(f"Error: Config file not found at {args.config_path}", file=sys.stderr)
