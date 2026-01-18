@@ -15,14 +15,25 @@ from iocl.iocl_utils import send_request_and_await
 
 import time
 
-def run_app(session_id, client_id, client_type, explen):
+def run_app(session_id, client_id, client_type, explen, warmup_secs=0, cooldown_secs=0):
     explen = float(explen)
     print("RUNNING SYNTHETIC_F1.PY (SYNC VERSION) - IOCL-CT", file=sys.stderr)
 
-    start = time.time()
-    end = start + explen
+    rampUp = int(warmup_secs)
+    rampDown = int(cooldown_secs)
 
-    while time.time() < end:
+    if rampUp + rampDown >= explen:
+        raise ValueError("Ramp-up + ramp-down must be less than total experiment length")
+
+    steady_secs = explen - rampUp - rampDown
+    t_start = time.time()
+    t_end = t_start + explen
+
+    print("#start,0,0")
+
+    while time.time() < t_end:
+        before = int(time.time() * 1e9)  # latency in ns
+
         result_0 = send_request_and_await(
             session_id,
             "SET",
@@ -30,10 +41,22 @@ def run_app(session_id, client_id, client_type, explen):
             "value1",
             None
         )
-        # print(
-        #     f"Client {client_id}: Sequential request result: {result_0}",
-        #     file=sys.stderr
-        # )
+
+        after = int(time.time() * 1e9)
+        lat = after - before
+        optime = int((time.time() - t_start) * 1e9)
+        optype = "SET"
+
+        now = time.time()
+        # Only print latencies during steady-state
+        if rampUp <= (now - t_start) < (rampUp + steady_secs):
+            print(f"app,{lat},{optime},{client_id}")
+            print(f"{optype},{lat},{optime},{client_id}")
+
+    elapsed = time.time() - t_start
+    end_sec = int(elapsed)
+    end_usec = int((elapsed - end_sec) * 1e6)
+    print(f"#end,{end_sec},{end_usec},{client_id}")
     return
 
 if __name__ == "__main__":
@@ -124,7 +147,7 @@ if __name__ == "__main__":
         session_id = redisstore.custom_init_session()
 
         print(f"Calling run_app with clientid={args.clientid}, explen={args.explen}, session_id={session_id}", file=sys.stderr)
-        run_app(session_id, args.clientid, "multi_paxos", args.explen)
+        run_app(session_id, args.clientid, "multi_paxos", args.explen, args.warmup_secs, args.cooldown_secs)
 
         # print(f"run_app completed successfully", file=sys.stderr)
 
