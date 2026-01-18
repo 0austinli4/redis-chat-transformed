@@ -15,10 +15,18 @@ from iocl.iocl_utils import send_request_and_await
 
 
 def run_app(session_id, client_id, client_type, explen):
-    print("RUNNING SIMPLE_TEST.PY (SYNC VERSION) - IOCL-CT", file=sys.stderr)
-    result_0 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
-    result_1 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_1", "value2", None)
-    print(f"Client {client_id}: Sequential request results: {result_0} {result_1}", file=sys.stderr)
+    print("RUNNING SYNTHETIC_F1.PY (SYNC VERSION) - IOCL-CT", file=sys.stderr)
+
+    start = time.time()
+    end = start + explen
+
+    while time.time() < end:
+        result_0 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
+        result_1 = send_request_and_await(session_id, "SET", f"test_key_{client_id}_1", "value2", None)
+        # print(
+        #     f"Client {client_id}: Sequential request result: {result_0}",
+        #     file=sys.stderr
+        # )
     return
 
 if __name__ == "__main__":

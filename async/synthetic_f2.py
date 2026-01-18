@@ -15,18 +15,16 @@ from iocl.iocl_utils import send_request, await_request
 
 
 def run_app(session_id, client_id, client_type, explen):
-    print("RUNNING SIMPLE_TEST.PY (ASYNC VERSION) - IOCL-CT", file=sys.stderr)
+    print("RUNNING SYNTHETIC_F2.PY (ASYNC VERSION) - IOCL-CT", file=sys.stderr)
+    start = time.time()
+    end = start + explen
 
-    # Simple test: Issue 2 requests concurrently for IOCL
-    # Send both requests without waiting
-    future_0 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
-    future_1 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value2", None)
-
-    # Now await both results
-    result_0 = await_request(session_id, future_0)
-    result_1 = await_request(session_id, future_1)
-
-    print(f"Client {client_id}: Concurrent request results: {result_0}, {result_1}", file=sys.stderr)
+    while time.time() < end:
+        future_0 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value1", None)
+        future_1 = send_request(session_id, "SET", f"test_key_{client_id}_1", "value2", None)
+        result_0 = await_request(session_id, future_0)
+        result_1 = await_request(session_id, future_1)
+        # print(f"Client {client_id}: Concurrent request results: {result_0}", file=sys.stderr)
     return
 
 
