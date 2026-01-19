@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from iocl.config_env import set_env_from_command_line_args, init_benchmark_with_config
 from iocl.iocl_utils import send_request_and_await
 
-
+import time
 def run_app(session_id, client_id, client_type, explen, warmup_secs=0, cooldown_secs=0):
     explen = float(explen)
     print("RUNNING SYNTHETIC_F1.PY (SYNC VERSION) - IOCL-CT", file=sys.stderr)
